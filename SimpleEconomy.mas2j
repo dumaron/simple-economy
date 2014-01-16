@@ -1,0 +1,11 @@
+/* Jason Project */
+
+MAS simpleEconomy {
+
+    infrastructure: Centralised
+
+    agents: 
+		worker #10;
+		firm #2;
+}
+
