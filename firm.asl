@@ -1,8 +1,6 @@
 // Agent firm in project SimpleEconomy.mas2j
 
 /* Initial beliefs and rules */
-maxX(300).
-maxY(500).
 
 /* Initial goals */
 
@@ -10,16 +8,13 @@ maxY(500).
 
 /* Plans */
 
-+offer(O)[source(S)] <-
-	.print("Ho ricevuto l'offerta con valore ",O," dall'agente ",S).
++offer[source(S)] <-
+	.print("ok").
 
-+!start : maxX(MX) & maxY(MY) <-
-	!boundRandom(MX, X);
-	!boundRandom(MY, Y);
-	+coords(X,Y);
++!start <-
 	.my_name(Me);
-	.broadcast(tell, introduction(Me, X, Y)).
+	.broadcast(tell, introduction(Me)).
 
 +!boundRandom(BOUND, RES) <-
 	.random(T);
-	RES = BOUND * T div 1.
+	RES = math.round(BOUND * T).

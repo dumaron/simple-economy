@@ -1,10 +1,7 @@
 // Agent worker in project SimpleEconomy.mas2j
 
 /* Initial beliefs and rules */
-maxX(300).
-maxY(500).
 maxOffer(5).
-maxRadius(100).
 
 /* Initial goals */
 
@@ -12,23 +9,25 @@ maxRadius(100).
 
 /* Plans */
 
-+!start : maxX(MX) & maxY(MY) <-
-	!boundRandom(MX, X);
-	!boundRandom(MY, Y);
-	+coords(X,Y);
++!start : maxOffer(M)<-
 	.wait(2000);
-	.findall([Name, FX, FY], introduction(Name ,FX, FY), L);
+	.findall(Name, introduction(Name), L);
 	+firmList(L);
-	!sendOffers.
+	!sendOffers(L, M).
 
-+!sendOffers : firmList(L) & maxRadius(MR) <- 
-	for (.member(X,L)) {
-		.nth(0,X,Name);
-		if (Name == firm1) {
-			.print("Idoli");
++!sendOffers(L, M) <-
+	if (M>0) { 
+		.length(L, Length);
+		!boundRandom(Length-1, Random);
+		if (Length > 0) {
+			.nth(Random, L, Firm);
+			.send(Firm, tell, offer);
+			.delete(Random, L, LA);
+			!sendOffers(LA, M-1);
 		}
 	}.
 	
 +!boundRandom(BOUND, RES) <-
 	.random(T);
-	RES = BOUND * T div 1.
+	RES = math.round(BOUND * T).
+

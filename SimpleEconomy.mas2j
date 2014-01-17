@@ -6,6 +6,6 @@ MAS simpleEconomy {
 
     agents: 
 		worker #10;
-		firm #2;
+		firm #3;
 }
 
