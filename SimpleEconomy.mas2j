@@ -1,11 +1,13 @@
 /* Jason Project */
 
 MAS simpleEconomy {
+	                     
+	infrastructure: Centralised
 
-    infrastructure: Centralised
-
+	environment: world(10,5)
+	
     agents: 
 		worker #10;
-		firm #3;
+		firm #5;
 }
 

@@ -20,14 +20,25 @@ maxOffer(5).
 		.length(L, Length);
 		!boundRandom(Length-1, Random);
 		if (Length > 0) {
+			.my_name(Me);
 			.nth(Random, L, Firm);
-			.send(Firm, tell, offer);
+			.send(Firm, tell, offer(Me));
 			.delete(Random, L, LA);
 			!sendOffers(LA, M-1);
 		}
+		else {
+			sentAllOffers;
+		}
+	}
+	else {
+		sentAllOffers;
 	}.
 	
 +!boundRandom(BOUND, RES) <-
 	.random(T);
 	RES = math.round(BOUND * T).
+	
++offersOver <-
+	print("offers over").
+	
 
