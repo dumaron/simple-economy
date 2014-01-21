@@ -1,7 +1,7 @@
 // Agent worker in project SimpleEconomy.mas2j
 
 /* Initial beliefs and rules */
-maxOffer(5).
+maxDemand(5).
 
 /* Initial goals */
 
@@ -9,36 +9,49 @@ maxOffer(5).
 
 /* Plans */
 
-+!start : maxOffer(M)<-
++!start : maxDemand(M)<-
 	.wait(2000);
 	.findall(Name, introduction(Name), L);
 	+firmList(L);
-	!sendOffers(L, M).
+	!sendDemands(L, M).
 
-+!sendOffers(L, M) <-
++!sendDemands(L, M) <-
 	if (M>0) { 
 		.length(L, Length);
 		!boundRandom(Length-1, Random);
 		if (Length > 0) {
 			.my_name(Me);
 			.nth(Random, L, Firm);
-			.send(Firm, tell, offer(Me));
+			.send(Firm, tell, demand(Me));
 			.delete(Random, L, LA);
-			!sendOffers(LA, M-1);
+			!sendDemands(LA, M-1);
 		}
 		else {
-			sentAllOffers;
+			sentAllDemand;
 		}
 	}
 	else {
-		sentAllOffers;
+		sentAllDemand;
 	}.
 	
 +!boundRandom(BOUND, RES) <-
 	.random(T);
 	RES = math.round(BOUND * T).
 	
-+offersOver <-
-	print("offers over").
-	
++jobOfferOver <-
+	.findall(Firm, jobOffer(Firm), L);
+	//.print("Mi sono state fatte offerte di lavoro da ",L);
+	.length(L, Length);
+	if (Length>0) {
+		.nth(0, L, ChoosedFirm);
+		!startWork(ChoosedFirm);
+	} else {
+		//.print("Io rimango disoccupato, per ora");
+		unemployed;
+	}
+	.
+
++!startWork(Firm) <-
+	//.send(Firm, tell, accept);
+	employed.
 

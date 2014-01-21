@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 public class world extends Environment {
 	// any class members needed...
 	
-	Integer nfirm, nworkers;
+	Integer nfirm, nworkers, employed, unemployed, cycle=1;
 	List<String> firms;
 	List<String> workers;
 	
@@ -27,7 +27,10 @@ public class world extends Environment {
 		//addPercept("ag1", Literal.parseLiteral("p(a)"));
 		nworkers= new Integer(args[0]);
 		nfirm= new Integer(args[1]);
+		employed = new Integer(0);
+		unemployed = new Integer(0);
 		workers=new ArrayList<String>();
+		firms = new ArrayList<String>();
 	}
 	@Override
 	public void stop() {
@@ -40,18 +43,33 @@ public class world extends Environment {
 		// effects of agent actions on perceptible properties
 		// of the environment is defined
 		
-		//logger.info("received act from: "+ag);
-		
-		
-		if(act.getFunctor().equals("sentAllOffers")) {
+		if(act.getFunctor().equals("sentAllDemand")) {
 			workers.add(ag);
 			//logger.info("nworkers: "+nworkers);
 			if(workers.size() == nworkers) {
-				addPercept(Literal.parseLiteral("offersOver"));
+				// nella versione finale questa credenza verrà assegnata solo alle firm
+				addPercept(Literal.parseLiteral("demandOver"));
 			}
+		}
+		else if (act.getFunctor().equals("sentAllJobOffer")) {
+			firms.add(ag);
+			if (firms.size() == nfirm) {
+				// nella versione finale questa credenza verrà assegnata solo ai worker
+				addPercept(Literal.parseLiteral("jobOfferOver"));	
+			}
+		}
+		else if (act.getFunctor().equals("unemployed")) {
+			unemployed++;
+		}
+		else if (act.getFunctor().equals("employed")) {
+			employed++;
+		}
+		
+		if (employed + unemployed == nworkers) {
+			logger.info("Nel ciclo di lavoro "+ cycle++ +" ho "+employed+ " occupati e "+unemployed+" disoccupati.");
+			employed = unemployed = 0;
 		}
 		return true;
 	}
-	
 }
 
