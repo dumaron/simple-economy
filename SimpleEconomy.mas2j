@@ -4,10 +4,10 @@ MAS simpleEconomy {
 	                     
 	infrastructure: Centralised
 
-	environment: world(10,2)
+	environment: world(10,8)
 	
     agents: 
 		worker #10;
-		firm #2;
+		firm #8;
 }
 

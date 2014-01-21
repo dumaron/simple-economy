@@ -25,14 +25,18 @@
 +!chooseWorkers : neededWorkers(Nwork) <-
 	.findall(Worker, demand(Worker), L);
 	.length(L, Length);
+	
+	//perché???
+	Length = Length;
 	// nella versione finale i lavoratori verranno ordinati a seconda della loro richiesta di denaro
 	for( .range(I, 0, Nwork - 1) ) {
-		if(I < Lenght) {
+		if( Length > I) {
 			.print(I, " - ", Length);
 			.nth(I, L, Employee);
 			!employ(Employee);
-		} else {
-			.print("ma porca...");
+		} 
+		else {
+			.print("end list");
 		}
 	}
 	sentAllJobOffer;
