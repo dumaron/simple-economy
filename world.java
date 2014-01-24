@@ -48,6 +48,7 @@ public class world extends Environment {
 			//logger.info("nworkers: "+nworkers);
 			if(workers.size() == nworkers) {
 				// nella versione finale questa credenza verrà assegnata solo alle firm
+				removePercept(Literal.parseLiteral("beginCycle"));
 				addPercept(Literal.parseLiteral("demandOver"));
 			}
 		}
@@ -68,6 +69,11 @@ public class world extends Environment {
 		if (employed + unemployed == nworkers) {
 			logger.info("Nel ciclo di lavoro "+ cycle++ +" ho "+employed+ " occupati e "+unemployed+" disoccupati.");
 			employed = unemployed = 0;
+			workers.clear();
+			firms.clear();
+			addPercept(Literal.parseLiteral("beginCycle"));
+			removePercept(Literal.parseLiteral("demandOver"));
+			removePercept(Literal.parseLiteral("jobOfferOver"));
 		}
 		return true;
 	}

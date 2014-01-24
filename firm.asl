@@ -23,27 +23,33 @@
 	!chooseWorkers.
 
 +!chooseWorkers : neededWorkers(Nwork) <-
-	.findall(Worker, demand(Worker), L);
-	.length(L, Length);
-	
+	.findall([W, Worker], demand(Worker,W), L);
+	.abolish(demand(_,_));
+	.findall([W, Employed], accept(Employed, W), Old);
+	.abolish(accept(_,_));
+	.difference(L, Old, X);
+	.sort(Old, OldSorted);
+	.sort(X, XSorted);
+	.print("old is",OldSorted);
+	.print("x is:",XSorted);
+	.union(Old, X, Y);
+	.length(Y, Length);
 	//perché???
 	Length = Length;
 	// nella versione finale i lavoratori verranno ordinati a seconda della loro richiesta di denaro
 	for( .range(I, 0, Nwork - 1) ) {
 		if( Length > I) {
-			.print(I, " - ", Length);
-			.nth(I, L, Employee);
+			.nth(I, Y, Employee);
 			!employ(Employee);
-		} 
+		}
 		else {
-			.print("end list");
 		}
 	}
 	sentAllJobOffer;
 	.
 
 +!employ(E) <-
+	.nth(1, E, Worker);
 	.my_name(Me);
-	.send(E, tell, jobOffer(Me)).
-	
-	
+	.send(Worker, tell, jobOffer(Me)).
+
