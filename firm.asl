@@ -11,7 +11,6 @@
 +!start <-
 	.my_name(Me);
 	!boundRandom(9,N);
-	//.print("La firm ha in totale ",N," posti di lavoro");
 	+neededWorkers(N);
 	.broadcast(tell, introduction(Me)).
 
@@ -27,12 +26,20 @@
 	.abolish(demand(_,_));
 	.findall([W, Employed], accept(Employed, W), Old);
 	.abolish(accept(_,_));
+	NewL = [];
+	for (.member(X ,Old)) {
+		.nth(1, X, Name);
+		if (.member(L, [_, Name])) {
+			.print(Name);
+		}
+	}
 	.difference(L, Old, X);
 	.sort(Old, OldSorted);
 	.sort(X, XSorted);
 	.print("old is",OldSorted);
-	.print("x is:",XSorted);
-	.union(Old, X, Y);
+	//.print("x is:",XSorted);
+	.concat(Old, X, Y);
+	.print("Y is:", Y);
 	.length(Y, Length);
 	//perché???
 	Length = Length;
@@ -52,4 +59,9 @@
 	.nth(1, E, Worker);
 	.my_name(Me);
 	.send(Worker, tell, jobOffer(Me)).
+
++jobMarketClosed : neededWorkers(N) <- 
+	.findall(E, accept(E, W), L);
+	.length(L, Employed);
+	endCycle(N-Employed).
 

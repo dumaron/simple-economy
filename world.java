@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 public class world extends Environment {
 	// any class members needed...
 	
-	Integer nfirm, nworkers, employed, unemployed, cycle=1;
+	Integer nfirm, nworkers, employed, unemployed, cycle=1, firmCount;
 	List<String> firms;
 	List<String> workers;
 	
@@ -27,6 +27,7 @@ public class world extends Environment {
 		//addPercept("ag1", Literal.parseLiteral("p(a)"));
 		nworkers= new Integer(args[0]);
 		nfirm= new Integer(args[1]);
+		firmCount = new Integer(0);
 		employed = new Integer(0);
 		unemployed = new Integer(0);
 		workers=new ArrayList<String>();
@@ -65,13 +66,22 @@ public class world extends Environment {
 		else if (act.getFunctor().equals("employed")) {
 			employed++;
 		}
+		else if (act.getFunctor().equals("endCycle")) {
+			firmCount++;
+			if (firmCount.equals(nfirm)) {
+				removePercept(Literal.parseLiteral("jobMarketClosed"));
+				firmCount = 0;
+				addPercept(Literal.parseLiteral("beginCycle"));
+			}
+		}
+
 		
 		if (employed + unemployed == nworkers) {
 			logger.info("Nel ciclo di lavoro "+ cycle++ +" ho "+employed+ " occupati e "+unemployed+" disoccupati.");
 			employed = unemployed = 0;
 			workers.clear();
 			firms.clear();
-			addPercept(Literal.parseLiteral("beginCycle"));
+			addPercept(Literal.parseLiteral("jobMarketClosed"));
 			removePercept(Literal.parseLiteral("demandOver"));
 			removePercept(Literal.parseLiteral("jobOfferOver"));
 		}

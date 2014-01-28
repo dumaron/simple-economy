@@ -19,6 +19,7 @@ maxWage(1000).
 
 +beginCycle <-
 	-beginCycle;
+	-unemployed;
 	!sendDemands.
 	
 +!sendDemands : firmList(L) & maxDemand(M) <-
@@ -55,35 +56,39 @@ maxWage(1000).
 		.nth(0, L, ChoosedFirm);
 		!startWork(ChoosedFirm);
 	} else {
-		//.print("Io rimango disoccupato, per ora");
-		unemployed;
+		+unemployed;
 	}
 	.
 
 +jobOfferOver : oldFirm(F) <-
 	.findall(Firm, jobOffer(Firm), L);
 	.abolish(jobOffer(_));
-	//.print("Mi sono state fatte offerte di lavoro da ",L);
 	.length(L, Length);
 	if( .member(F, L) ) {
 		!startWork(F);
 	}
 	else {
-	if (Length>0) {
-		.nth(0, L, ChoosedFirm);
-		!startWork(ChoosedFirm);
-	}
-	else {
-		//.print("Io rimango disoccupato, per ora");
-		unemployed;
-		.abolish(oldFirm(_));
-	}
+		if (Length>0) {
+			.nth(0, L, ChoosedFirm);
+			!startWork(ChoosedFirm);
+		}
+		else {
+			+unemployed;
+			.abolish(oldFirm(_));
+		}
 	}
 	.
 
++unemployed : requiredWage(W)<- 
+	unemployed;
+	.random(R);
+	-+requiredWage(math.round(W*R)).
+	
 +!startWork(Firm) : requiredWage(W) <-
 	.my_name(Me);
 	.send(Firm, tell, accept(Me,W));
 	employed;
+	.random(R);
+	-+requiredWage(math.round(W*(1+R)));
 	-+oldFirm(Firm).
 
