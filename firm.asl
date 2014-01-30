@@ -1,12 +1,4 @@
-// Agent firm in project SimpleEconomy.mas2j
-
-/* Initial beliefs and rules */
-
-/* Initial goals */
-
 !start.
-
-/* Plans */
 	
 +!start <-
 	.my_name(Me);
@@ -19,34 +11,46 @@
 	RES = math.round(BOUND * T +1).
 
 +demandOver <-
-	!chooseWorkers.
-
-+!chooseWorkers : neededWorkers(Nwork) <-
-	.findall([W, Worker], demand(Worker,W), L);
+	.findall([W, Worker], demand(Worker,W), NewDemandsList);
 	.abolish(demand(_,_));
-	.findall([W, Employed], accept(Employed, W), Old);
+	+demands(NewDemandsList);
+	.findall(Employed, accept(Employed, W), OldEmployedList);
 	.abolish(accept(_,_));
-	NewL = [];
-	for (.member(X ,Old)) {
-		.nth(1, X, Name);
-		if (.member(L, [_, Name])) {
-			.print(Name);
+	!updateWages(NewDemandsList, OldEmployedList, []).
+	
++!updateWages(New, Old, Res) <-
+	.length(New, NewLength);
+	NewLength = NewLength;
+	if (NewLength > 0) {
+		.nth(0, New, NewDemand);
+		.delete(0, New, TailNew);
+		.nth(1, NewDemand, NewDemandName);
+		if (.member(NewDemandName, Old)) {
+			.concat([NewDemand], Res, NewRes);
+			!updateWages(TailNew, Old, NewRes);
+		} else {
+			!updateWages(TailNew, Old, Res);
 		}
 	}
-	.difference(L, Old, X);
-	.sort(Old, OldSorted);
-	.sort(X, XSorted);
-	.print("old is",OldSorted);
-	//.print("x is:",XSorted);
-	.concat(Old, X, Y);
-	.print("Y is:", Y);
-	.length(Y, Length);
+	else {
+		.sort(Res, SortedRes);
+		!chooseWorkers(SortedRes);
+	}
+	.
+
++!chooseWorkers(OldEmployedDemandsList) : neededWorkers(Nwork) & demands(DemandsList) <-
+	-demands(DemandsList);
+	.difference(DemandsList, OldEmployedDemandsList, NewEmployedDemandsList);
+	.sort(NewEmployedDemandsList, SortedNEDL);
+	.concat(OldEmployedDemandsList, SortedNEDL, Demands);
+	//.print("La lista dei vecchi è ", OldEmployedDemandsList);
+	//.print("La lista corretta è ", Demands);
+	.length(Demands, Length);
 	//perché???
 	Length = Length;
-	// nella versione finale i lavoratori verranno ordinati a seconda della loro richiesta di denaro
 	for( .range(I, 0, Nwork - 1) ) {
 		if( Length > I) {
-			.nth(I, Y, Employee);
+			.nth(I, Demands, Employee);
 			!employ(Employee);
 		}
 		else {

@@ -3,6 +3,7 @@
 /* Initial beliefs and rules */
 maxDemand(5).
 maxWage(1000).
+minWage(1).
 /* Initial goals */
 
 !start.
@@ -22,9 +23,18 @@ maxWage(1000).
 	-unemployed;
 	!sendDemands.
 	
-+!sendDemands : firmList(L) & maxDemand(M) <-
++!sendDemands : firmList(L) & maxDemand(M) & oldFirm(Old) <-
+	!sendDemand(L, M, Old).
+
++!sendDemands : firmList(L) & maxDemand(M) & not oldFirm(Old) <-
 	!sendDemand(L,M).
 
++!sendDemand(L, M, Old) : requiredWage(W) <-
+	.my_name(Me);
+	.delete(Old, L, ReducedL);
+	.send(Old, tell, demand(Me,W));
+	!sendDemand(ReducedL, M-1).
+	
 +!sendDemand(L, M) : requiredWage(W) <-
 	if (M>0) { 
 		.length(L, Length);
@@ -79,16 +89,16 @@ maxWage(1000).
 	}
 	.
 
-+unemployed : requiredWage(W)<- 
++unemployed : requiredWage(W) & minWage(WageLowerBound)<- 
 	unemployed;
-	.random(R);
-	-+requiredWage(math.round(W*R)).
+	!boundRandom(W - WageLowerBound, UpdWage);
+	-+requiredWage(W - UpdWage).
 	
-+!startWork(Firm) : requiredWage(W) <-
++!startWork(Firm) : requiredWage(W) & maxWage(WageBound) <-
 	.my_name(Me);
 	.send(Firm, tell, accept(Me,W));
 	employed;
-	.random(R);
-	-+requiredWage(math.round(W*(1+R)));
+	!boundRandom(WageBound - W, UpdWage);
+	-+requiredWage(W + UpdWage);
 	-+oldFirm(Firm).
 
