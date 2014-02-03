@@ -19,11 +19,13 @@ maxWorkers(9).
 // credenza che indica una nuova fase del ciclo, in cui tutti i curriculum
 // sono stati inviati dai lavoratori
 +demandOver <-
+	.wait(2000);
 	.findall([W, Worker], demand(Worker,W), NewDemandsList);
-	.abolish(demand(_,_));
 	+demands(NewDemandsList);
 	.findall(Employed, accept(Employed, W), OldEmployedList);
+	.abolish(demand(_,_));
 	.abolish(accept(_,_));
+	//.print(OldEmployedList);
 	!updateWages(NewDemandsList, OldEmployedList, []).
 
 // piano per implementare la fedeltà dell'azienda verso il lavoratore
@@ -73,22 +75,23 @@ maxWorkers(9).
 		}
 	}
 	// la fase del ciclo in cui si mandano risposte ai curriculum è terminata
-	sentAllJobOffer;
-	.
+	sentAllJobOffer.
 	
 // Piano per richiedere l'assunzione di un impegato
 +!employ(E) <-
 	.nth(1, E, WorkerName);
 	.my_name(Me);
-	.print(Me, ": sending job offer to", WorkerName);
+	//.print(Me, ": sending job offer to", WorkerName);
 	.send(WorkerName, tell, jobOffer(Me)).
 
 // credenza attivata nella fase del ciclo in cui esso termina
-+jobMarketClosed : neededWorkers(N) <- 
++jobMarketClosed : neededWorkers(N) <-
+	.wait(2000);
 	.findall(E, accept(E, W), L);
 	.length(L, Employed);
 	// informo l'environment sul mio dato occupazionale, così da avere al
 	// prossimo ciclo una probabilità di trovare lavoratori proporzionale a 
 	// questo valore
+	.abolish(introduction(_));
 	endCycle(N-Employed).
 

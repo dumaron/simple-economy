@@ -7,6 +7,7 @@ minWage(1). // stipendio minimo
 +!start : maxDemand(M) & maxWage(W)<-
 	.wait(2000); // necessario perché tutte le Firm si presentino
 	.findall(Name, introduction(Name), Firms);
+	.abolish(introduction(_));
 	+firmList(Firms);
 	!boundRandom(W, Wage);
 	+requiredWage(Wage);
@@ -55,9 +56,7 @@ minWage(1). // stipendio minimo
 	.random(R);
 	Result = math.round(Bound * R).
 
-+!chooseNewFirm <-
-	.findall(Firm, jobOffer(Firm), Firms);
-	.abolish(jobOffer(_));
++!chooseNewFirm(Firms) <-
 	.length(Firms, NumFirms);
 	// se ho almeno una richiesta di lavoro...
 	if (NumFirms>0) {
@@ -72,14 +71,17 @@ minWage(1). // stipendio minimo
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
 // ciclo precedente ero disoccupato
 +jobOfferOver : not oldFirm(F) <-
-	!chooseNewFirm.
+	.wait(2000);
+	.findall(Firm, jobOffer(Firm), Firms);
+	.abolish(jobOffer(_));
+	!chooseNewFirm(Firms).
 
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
 // ciclo precedente ero occupato
 +jobOfferOver : oldFirm(Old) <-
+	.wait(2000);
 	.findall(Firm, jobOffer(Firm), Firms);
 	.abolish(jobOffer(_));
-	.length(Firms, Length);
 	if( .member(Old, Firms) ) {
 		// torno a lavorare per il mio vecchio datore di lavoro solo se ha 
 		// rinnovato la sua richiesta nei miei confronti
@@ -87,25 +89,31 @@ minWage(1). // stipendio minimo
 	}
 	else {
 		// se non rinnova la richiesta, provo con gli altri datori
-		!chooseNewFirm;
+		.print("AZZ!");
+		.print(Firms, Old);
+		!chooseNewFirm(Firms);
 	}.
+	
++unemployed : oldFirm(F) <-
+	.print("Eccolo....").
 
-+unemployed : requiredWage(W) & minWage(WageLowerBound)<- 
-	// informo l'environment che per questo ciclo sono disoccupato
-	unemployed;
++unemployed : requiredWage(W) & minWage(WageLowerBound) <- 
 	// abbasso il mio stipendio, usando come limite inferiore minWage
 	!boundRandom(W - WageLowerBound, UpdWage);
-	-+requiredWage(W - UpdWage).
+	-+requiredWage(W - UpdWage);
+	// informo l'environment che per questo ciclo sono disoccupato
+	unemployed.
+	
 	
 +!startWork(Firm) : requiredWage(W) & maxWage(WageBound) <-
 	// informo l'azienda che accetto
 	.my_name(Me);
-	.print(Me,": accepting job from", Firm);
+	//.print(Me,": accepting job from", Firm);
 	.send(Firm, tell, accept(Me,W));
-	// informo l'environment che per questo ciclo sono occupato
-	employed;
 	// alzo lo stipendio!!
 	!boundRandom(WageBound - W, UpdWage);
 	-+requiredWage(W + UpdWage);
-	-+oldFirm(Firm).
+	-+oldFirm(Firm);
+	// informo l'environment che per questo ciclo sono occupato
+	employed.
 
