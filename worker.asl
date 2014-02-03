@@ -30,6 +30,7 @@ minWage(1). // stipendio minimo
 	.delete(Old, L, ReducedL);
 	.my_name(Me);
 	.send(Old, tell, demand(Me, Wage));
+	.send(Old, askOne, demand(Me,Wage), Unused);
 	!sendDemand(ReducedL, M-1).
 
 // Piano per inviare una richiesta di lavoro agli imprenditori che conosco, 
@@ -42,6 +43,7 @@ minWage(1). // stipendio minimo
 		.nth(Random, Firms, Firm);
 		.my_name(Me);
 		.send(Firm, tell, demand(Me, Wage));
+		.send(Firm, askOne, demand(Me,Wage), Unused);
 		.delete(Random, Firms, ReducedFirms);
 		!sendDemand(ReducedFirms, Count-1);
 	}
@@ -71,7 +73,6 @@ minWage(1). // stipendio minimo
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
 // ciclo precedente ero disoccupato
 +jobOfferOver : not oldFirm(F) <-
-	.wait(2000);
 	.findall(Firm, jobOffer(Firm), Firms);
 	.abolish(jobOffer(_));
 	!chooseNewFirm(Firms).
@@ -79,9 +80,7 @@ minWage(1). // stipendio minimo
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
 // ciclo precedente ero occupato
 +jobOfferOver : oldFirm(Old) <-
-	.wait(2000);
 	.findall(Firm, jobOffer(Firm), Firms);
-	.abolish(jobOffer(_));
 	if( .member(Old, Firms) ) {
 		// torno a lavorare per il mio vecchio datore di lavoro solo se ha 
 		// rinnovato la sua richiesta nei miei confronti
@@ -89,13 +88,8 @@ minWage(1). // stipendio minimo
 	}
 	else {
 		// se non rinnova la richiesta, provo con gli altri datori
-		.print("AZZ!");
-		.print(Firms, Old);
 		!chooseNewFirm(Firms);
 	}.
-	
-+unemployed : oldFirm(F) <-
-	.print("Eccolo....").
 
 +unemployed : requiredWage(W) & minWage(WageLowerBound) <- 
 	// abbasso il mio stipendio, usando come limite inferiore minWage
@@ -110,6 +104,7 @@ minWage(1). // stipendio minimo
 	.my_name(Me);
 	//.print(Me,": accepting job from", Firm);
 	.send(Firm, tell, accept(Me,W));
+	.send(Firm, askOne, accept(Me,W), UnusedRes);
 	// alzo lo stipendio!!
 	!boundRandom(WageBound - W, UpdWage);
 	-+requiredWage(W + UpdWage);

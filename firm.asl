@@ -11,7 +11,7 @@ maxWorkers(9).
 	// imposto un valore intero casuale limitato da 1 e maxWorkers per definire
 	// il numero di lavoratori di cui l'azienda ha bisogno
 	!boundRandom(MW, N);
-	+neededWorkers(5);
+	+neededWorkers(N);
 	// mi presento a tutti gli altri agenti
 	.my_name(Me);
 	.broadcast(tell, introduction(Me)).
@@ -19,7 +19,6 @@ maxWorkers(9).
 // credenza che indica una nuova fase del ciclo, in cui tutti i curriculum
 // sono stati inviati dai lavoratori
 +demandOver <-
-	.wait(2000);
 	.findall([W, Worker], demand(Worker,W), NewDemandsList);
 	+demands(NewDemandsList);
 	.findall(Employed, accept(Employed, W), OldEmployedList);
@@ -82,11 +81,11 @@ maxWorkers(9).
 	.nth(1, E, WorkerName);
 	.my_name(Me);
 	//.print(Me, ": sending job offer to", WorkerName);
-	.send(WorkerName, tell, jobOffer(Me)).
+	.send(WorkerName, tell, jobOffer(Me));
+	.send(WorkerName, askOne, jobOffer(Me), UnusedRes).
 
 // credenza attivata nella fase del ciclo in cui esso termina
 +jobMarketClosed : neededWorkers(N) <-
-	.wait(2000);
 	.findall(E, accept(E, W), L);
 	.length(L, Employed);
 	// informo l'environment sul mio dato occupazionale, così da avere al
