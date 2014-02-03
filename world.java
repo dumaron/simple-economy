@@ -48,6 +48,7 @@ public class world extends Environment {
 			workers.add(ag);
 			//logger.info("nworkers: "+nworkers);
 			if(workers.size() == nworkers) {
+				workers.clear();
 				// nella versione finale questa credenza verrà assegnata solo alle firm
 				removePercept(Literal.parseLiteral("beginCycle"));
 				addPercept(Literal.parseLiteral("demandOver"));
@@ -56,6 +57,7 @@ public class world extends Environment {
 		else if (act.getFunctor().equals("sentAllJobOffer")) {
 			firms.add(ag);
 			if (firms.size() == nfirm) {
+				firms.clear();
 				// nella versione finale questa credenza verrà assegnata solo ai worker
 				addPercept(Literal.parseLiteral("jobOfferOver"));	
 			}

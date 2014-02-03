@@ -100,6 +100,7 @@ minWage(1). // stipendio minimo
 +!startWork(Firm) : requiredWage(W) & maxWage(WageBound) <-
 	// informo l'azienda che accetto
 	.my_name(Me);
+	.print(Me,": accepting job from", Firm);
 	.send(Firm, tell, accept(Me,W));
 	// informo l'environment che per questo ciclo sono occupato
 	employed;

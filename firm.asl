@@ -11,7 +11,7 @@ maxWorkers(9).
 	// imposto un valore intero casuale limitato da 1 e maxWorkers per definire
 	// il numero di lavoratori di cui l'azienda ha bisogno
 	!boundRandom(MW, N);
-	+neededWorkers(N);
+	+neededWorkers(5);
 	// mi presento a tutti gli altri agenti
 	.my_name(Me);
 	.broadcast(tell, introduction(Me)).
@@ -59,6 +59,7 @@ maxWorkers(9).
 	// loro nuova richiesta di stipendio, poi i disoccupati a loro volta
 	// ordinati secondo questo criterio
 	
+	//.print("needed work is", Nwork);
 	//.print("La lista dei vecchi è ", OldEmployedDemandsList);
 	//.print("La lista corretta è ", Demands);
 	.length(Demands, Length);
@@ -79,6 +80,7 @@ maxWorkers(9).
 +!employ(E) <-
 	.nth(1, E, WorkerName);
 	.my_name(Me);
+	.print(Me, ": sending job offer to", WorkerName);
 	.send(WorkerName, tell, jobOffer(Me)).
 
 // credenza attivata nella fase del ciclo in cui esso termina
