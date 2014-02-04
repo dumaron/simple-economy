@@ -17,8 +17,11 @@ minWage(1). // stipendio minimo
 +beginCycle <-
 	-beginCycle;
 	-unemployed; // almeno c'è la buona volontà
+	.findall(Firm, firmVacancies(Firm, N), FirmVac);
+	-+firmList(FirmVac);
 	!sendDemands.
-	
+
+
 +!sendDemands : firmList(L) & maxDemand(M) & oldFirm(Old) <-
 	!sendDemand(L, M, Old).
 
@@ -44,7 +47,7 @@ minWage(1). // stipendio minimo
 		.my_name(Me);
 		.send(Firm, tell, demand(Me, Wage));
 		.send(Firm, askOne, demand(Me,Wage), Unused);
-		.delete(Random, Firms, ReducedFirms);
+		.delete(Firm, Firms, ReducedFirms);
 		!sendDemand(ReducedFirms, Count-1);
 	}
 	else {
@@ -91,6 +94,8 @@ minWage(1). // stipendio minimo
 		!chooseNewFirm(Firms);
 	}.
 
+	
+	
 +unemployed : requiredWage(W) & minWage(WageLowerBound) <- 
 	// abbasso il mio stipendio, usando come limite inferiore minWage
 	!boundRandom(W - WageLowerBound, UpdWage);

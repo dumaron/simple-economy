@@ -92,5 +92,5 @@ maxWorkers(9).
 	// prossimo ciclo una probabilità di trovare lavoratori proporzionale a 
 	// questo valore
 	.abolish(introduction(_));
-	endCycle(N-Employed).
+	endCycle(N - Employed). 
 

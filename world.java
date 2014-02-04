@@ -69,7 +69,13 @@ public class world extends Environment {
 			employed++;
 		}
 		else if (act.getFunctor().equals("endCycle")) {
+			//int i;
+			Integer probab, i;
 			firmCount++;
+			probab=Integer.parseInt(act.getTerm(0).toString());
+			for(i=0; i<=probab; i++) {
+				addPercept(Literal.parseLiteral("firmVacancies("+ag+","+i+")"));
+			}
 			if (firmCount.equals(nfirm)) {
 				removePercept(Literal.parseLiteral("jobMarketClosed"));
 				firmCount = 0;
@@ -79,6 +85,7 @@ public class world extends Environment {
 
 		
 		if (employed + unemployed == nworkers) {
+			removePerceptsByUnif(Literal.parseLiteral("firmVacancies(_,_)"));
 			logger.info("Nel ciclo di lavoro "+ cycle++ +" ho "+employed+ " occupati e "+unemployed+" disoccupati.");
 			employed = unemployed = 0;
 			workers.clear();
