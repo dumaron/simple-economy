@@ -2,10 +2,10 @@ maxDemand(5). // massimo numero di curriculum inviabili
 maxWage(1000). // stipendio massimo (ahahaha)
 minWage(1). // stipendio minimo
 
-!start.
++?introduction(Source) <- 
+	+introduction(Source).
 
-+!start : maxDemand(M) & maxWage(W)<-
-	.wait(2000); // necessario perché tutte le Firm si presentino
++firstCycle : maxDemand(M) & maxWage(W)<-
 	.findall(Name, introduction(Name), Firms);
 	.abolish(introduction(_));
 	+firmList(Firms);
@@ -45,7 +45,7 @@ minWage(1). // stipendio minimo
 		!boundRandom(NumFirms-1, Random);
 		.nth(Random, Firms, Firm);
 		.my_name(Me);
-		.send(Firm, tell, demand(Me, Wage));
+		//.send(Firm, tell, demand(Me, Wage));
 		.send(Firm, askOne, demand(Me,Wage), Unused);
 		.delete(Firm, Firms, ReducedFirms);
 		!sendDemand(ReducedFirms, Count-1);
@@ -73,6 +73,9 @@ minWage(1). // stipendio minimo
 		+unemployed;
 	}.
 
++?jobOffer(Firm) <- 
+	+jobOffer(Firm).
+	
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
 // ciclo precedente ero disoccupato
 +jobOfferOver : not oldFirm(F) <-
@@ -94,8 +97,6 @@ minWage(1). // stipendio minimo
 		!chooseNewFirm(Firms);
 	}.
 
-	
-	
 +unemployed : requiredWage(W) & minWage(WageLowerBound) <- 
 	// abbasso il mio stipendio, usando come limite inferiore minWage
 	!boundRandom(W - WageLowerBound, UpdWage);
@@ -108,8 +109,8 @@ minWage(1). // stipendio minimo
 	// informo l'azienda che accetto
 	.my_name(Me);
 	//.print(Me,": accepting job from", Firm);
-	.send(Firm, tell, accept(Me,W));
-	.send(Firm, askOne, accept(Me,W), UnusedRes);
+	//.send(Firm, tell, accept(Me,W));
+	.send(Firm, askOne, accept(Me), UnusedRes);
 	// alzo lo stipendio!!
 	!boundRandom(WageBound - W, UpdWage);
 	-+requiredWage(W + UpdWage);

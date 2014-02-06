@@ -11,19 +11,23 @@ maxWorkers(9).
 	// imposto un valore intero casuale limitato da 1 e maxWorkers per definire
 	// il numero di lavoratori di cui l'azienda ha bisogno
 	!boundRandom(MW, N);
-	+neededWorkers(N);
+	+neededWorkers(5);
 	// mi presento a tutti gli altri agenti
 	.my_name(Me);
-	.broadcast(tell, introduction(Me)).
+	.broadcast(askOne, introduction(Me));
+	introduced.
+
++?demand(Worker, Wage) <- 
+	+demand(Worker, Wage).
 
 // credenza che indica una nuova fase del ciclo, in cui tutti i curriculum
 // sono stati inviati dai lavoratori
 +demandOver <-
 	.findall([W, Worker], demand(Worker,W), NewDemandsList);
 	+demands(NewDemandsList);
-	.findall(Employed, accept(Employed, W), OldEmployedList);
+	.findall(Employed, accept(Employed), OldEmployedList);
 	.abolish(demand(_,_));
-	.abolish(accept(_,_));
+	.abolish(accept(_));
 	//.print(OldEmployedList);
 	!updateWages(NewDemandsList, OldEmployedList, []).
 
@@ -59,10 +63,7 @@ maxWorkers(9).
 	// la lista Demands contiene prima i vecchi impiegati ordinati secondo la
 	// loro nuova richiesta di stipendio, poi i disoccupati a loro volta
 	// ordinati secondo questo criterio
-	
-	//.print("needed work is", Nwork);
-	//.print("La lista dei vecchi è ", OldEmployedDemandsList);
-	//.print("La lista corretta è ", Demands);
+
 	.length(Demands, Length);
 	Length = Length;	// ??
 	// rispondo solo se sono entro al mio numero di lavoratori richiesti e se 
@@ -81,12 +82,15 @@ maxWorkers(9).
 	.nth(1, E, WorkerName);
 	.my_name(Me);
 	//.print(Me, ": sending job offer to", WorkerName);
-	.send(WorkerName, tell, jobOffer(Me));
+	//.send(WorkerName, tell, jobOffer(Me));
 	.send(WorkerName, askOne, jobOffer(Me), UnusedRes).
 
++?accept(Worker) <-
+	+accept(Worker).
+	
 // credenza attivata nella fase del ciclo in cui esso termina
 +jobMarketClosed : neededWorkers(N) <-
-	.findall(E, accept(E, W), L);
+	.findall(W, accept(W), L);
 	.length(L, Employed);
 	// informo l'environment sul mio dato occupazionale, così da avere al
 	// prossimo ciclo una probabilità di trovare lavoratori proporzionale a 
