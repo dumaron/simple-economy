@@ -1,17 +1,23 @@
-maxWorkers(9).
+maxProduction(27).
+productionCoefficient(3).
+goods(0).
+capital(10000).
 
 !start.
 
 // piano per generare un intero casuale limitato superiorimente da Bound
 +!boundRandom(Bound, Result) <-
 	.random(R);
-	Result = math.round(Bound * R). 
+	Result = math.round((Bound - 1) * R)+1.
 	
-+!start : maxWorkers(MW) <-
++!start : maxProduction(MProd) & productionCoefficient(C) <-
 	// imposto un valore intero casuale limitato da 1 e maxWorkers per definire
 	// il numero di lavoratori di cui l'azienda ha bisogno
-	!boundRandom(MW, N);
-	+neededWorkers(N);
+	!boundRandom(MProd, TargProd);
+	+targetProduction(TargProd);
+	Nwork = TargProd div C;
+	+neededWorkers(Nwork);
+	.print("nworkers", Nwork);
 	// mi presento a tutti gli altri agenti
 	.my_name(Me);
 	.broadcast(tell, introduction(Me)).
@@ -75,7 +81,7 @@ maxWorkers(9).
 	}
 	// la fase del ciclo in cui si mandano risposte ai curriculum è terminata
 	sentAllJobOffer.
-	
+
 // Piano per richiedere l'assunzione di un impegato
 +!employ(E) <-
 	.nth(1, E, WorkerName);
@@ -85,12 +91,15 @@ maxWorkers(9).
 	.send(WorkerName, askOne, jobOffer(Me), UnusedRes).
 
 // credenza attivata nella fase del ciclo in cui esso termina
-+jobMarketClosed : neededWorkers(N) <-
++jobMarketClosed : neededWorkers(N) & productionCoefficient(C) & goods(G) <-
 	.findall(E, accept(E, W), L);
 	.length(L, Employed);
 	// informo l'environment sul mio dato occupazionale, così da avere al
 	// prossimo ciclo una probabilità di trovare lavoratori proporzionale a 
 	// questo valore
 	.abolish(introduction(_));
-	endCycle(N - Employed). 
+	Production = Employed * C;
+	-+goods(Production + G);
+	.print("production is: ", Production, "old goods are", G);
+	endCycle(N - Employed).
 
