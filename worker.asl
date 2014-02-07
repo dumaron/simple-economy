@@ -21,7 +21,6 @@ minWage(1). // stipendio minimo
 	-+firmList(FirmVac);
 	!sendDemands.
 
-
 +!sendDemands : firmList(L) & maxDemand(M) & oldFirm(Old) <-
 	!sendDemand(L, M, Old).
 
