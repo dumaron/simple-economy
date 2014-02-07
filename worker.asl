@@ -1,6 +1,8 @@
 maxDemand(5). // massimo numero di curriculum inviabili
 maxWage(1000). // stipendio massimo (ahahaha)
 minWage(1). // stipendio minimo
+money(100).
+maxSellers(5).
 
 +?introduction(Source) <- 
 	+introduction(Source).
@@ -102,14 +104,40 @@ minWage(1). // stipendio minimo
 	-+requiredWage(W - UpdWage);
 	// informo l'environment che per questo ciclo sono disoccupato
 	unemployed.
-	
-	
+
++?pay(Wage) : money(M) <-
+	-+money(M+Wage).
+	//.print("Got money ", M+Wage).
+
++startGoodsMarket : maxSellers(NSellers) <-
+	.findall(Firm, firmProduction(Firm, Production), LProd);
+	//.print(L);
+	!chooseSeller(LProd, NSellers).
+
++!chooseSeller([], NSellers) <-
+	.print("Scelto Negozi").
+
++!chooseSeller(LProd, NSellers) : oldSeller(S) & .member(S, LProd) <-
+	//ask seller
+	.delete(S, LProd, UpdLProd);
+	!chooseSeller(UpdLprod, NSellers-1).
+
++!chooseSeller(LProd, NSellers) : NSellers >0 <-
+	.length(LProd, NProd);
+	!boundRandom( NProd-1, Idx);
+	.print("Idx is ", Idx);
+	.nth(Idx, LProd, Seller);
+	//ask seller
+	.print("Selezionato negozio ", Seller);
+	.delete(Seller, LProd, UpdLProd);
+	!chooseSeller(UpdLProd, NSellers - 1).
+
+
 +!startWork(Firm) : requiredWage(W) & maxWage(WageBound) <-
 	// informo l'azienda che accetto
 	.my_name(Me);
 	//.print(Me,": accepting job from", Firm);
-	//.send(Firm, tell, accept(Me,W));
-	.send(Firm, askOne, accept(Me), UnusedRes);
+	.send(Firm, askOne, accept(Me, W), UnusedRes);
 	// alzo lo stipendio!!
 	!boundRandom(WageBound - W, UpdWage);
 	-+requiredWage(W + UpdWage);

@@ -31,9 +31,9 @@ capital(10000).
 +demandOver <-
 	.findall([W, Worker], demand(Worker,W), NewDemandsList);
 	+demands(NewDemandsList);
-	.findall(Employed, accept(Employed), OldEmployedList);
+	.findall(Employed, accept(Employed, Wage), OldEmployedList);
 	.abolish(demand(_,_));
-	.abolish(accept(_));
+	.abolish(accept(_,_));
 	//.print(OldEmployedList);
 	!updateWages(NewDemandsList, OldEmployedList, []).
 
@@ -91,12 +91,21 @@ capital(10000).
 	//.send(WorkerName, tell, jobOffer(Me));
 	.send(WorkerName, askOne, jobOffer(Me), UnusedRes).
 
-+?accept(Worker) <-
-	+accept(Worker).
++?accept(Worker, Wage) <-
+	+accept(Worker, Wage).
+
++!payEmployed([]) <-
+	.print("Finito di pagà").
+
++!payEmployed([[Employed, Wage]|Tail]) : capital(C) <-
+	.send(Employed, askOne, pay(Wage), W);
+	-+capital(C - Wage);
+	//.print("Das Kapitaal ", C - Wage);
+	!payEmployed(Tail).
 	
 // credenza attivata nella fase del ciclo in cui esso termina
 +jobMarketClosed : neededWorkers(N) & productionCoefficient(C) & goods(G) <-
-	.findall(W, accept(W), L);
+	.findall([Worker, Wage], accept(Worker, Wage), L);
 	.length(L, Employed);
 	// informo l'environment sul mio dato occupazionale, così da avere al
 	// prossimo ciclo una probabilità di trovare lavoratori proporzionale a 
@@ -104,6 +113,7 @@ capital(10000).
 	.abolish(introduction(_));
 	Production = Employed * C;
 	-+goods(Production + G);
-	.print("production is: ", Production, "old goods are", G);
-	endCycle(N - Employed).
+	//.print("production is: ", Production, "old goods are ", G);
+	!payEmployed(L);
+	endJobCycle(N - Employed, Production).
 

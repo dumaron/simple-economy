@@ -89,16 +89,20 @@ public class world extends Environment {
 		else if (act.getFunctor().equals("employed")) {
 			employed++;
 		}
-		else if (act.getFunctor().equals("endCycle")) {
-			Integer probab, i;
+		else if (act.getFunctor().equals("endJobCycle")) {
+			Integer probab, i, production;
 			probab=Integer.parseInt(act.getTerm(0).toString());
+			production=Integer.parseInt(act.getTerm(1).toString());
 			for(i=0; i<=probab; i++) {
 				addPerceptToList(workers, "firmVacancies("+ag+","+i+")");
+			}
+			for(i=0; i<production; i++) {
+				addPerceptToList(workers, "firmProduction("+ag+","+i+")");
 			}
 			if (++firmCount == firms.size()) {
 				removePerceptToList(firms, "jobMarketClosed", false);
 				firmCount = 0;
-				addPerceptToList(workers, "beginCycle");
+				addPerceptToList(workers, "startGoodsMarket");
 			}
 		} else if (act.getFunctor().equals("introduced")) {
 			if (++firmCount == firms.size()) {
