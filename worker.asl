@@ -1,7 +1,7 @@
 maxDemand(5). // massimo numero di curriculum inviabili
 maxWage(1000). // stipendio massimo (ahahaha)
 minWage(1). // stipendio minimo
-money(100).
+money(1000).
 maxSellers(5).
 
 +?introduction(Source) <- 
@@ -33,8 +33,7 @@ maxSellers(5).
 +!sendDemand(L, M, Old) : requiredWage(Wage) <-
 	.delete(Old, L, ReducedL);
 	.my_name(Me);
-	.send(Old, tell, demand(Me, Wage));
-	.send(Old, askOne, demand(Me,Wage), Unused);
+	.send(Old, askOne, demand(Me, Wage), Unused);
 	!sendDemand(ReducedL, M-1).
 
 // Piano per inviare una richiesta di lavoro agli imprenditori che conosco, 
@@ -46,7 +45,6 @@ maxSellers(5).
 		!boundRandom(NumFirms-1, Random);
 		.nth(Random, Firms, Firm);
 		.my_name(Me);
-		//.send(Firm, tell, demand(Me, Wage));
 		.send(Firm, askOne, demand(Me,Wage), Unused);
 		.delete(Firm, Firms, ReducedFirms);
 		!sendDemand(ReducedFirms, Count-1);
@@ -107,41 +105,56 @@ maxSellers(5).
 
 +?pay(Wage) : money(M) <-
 	-+money(M+Wage).
-	//.print("Got money ", M+Wage).
 
 +startGoodsMarket : maxSellers(NSellers) <-
-	.findall(Firm, firmProduction(Firm, Production), LProd);
-	//.print(L);
-	!chooseSeller(LProd, NSellers).
+	.findall([Price, Firm], firmProduction(Firm, Price, Production), LProd);
+	!chooseSeller(LProd, NSellers, []).
 
-+!chooseSeller([], NSellers) <-
-	.print("Scelto Negozi").
++!chooseSeller([], NSellers, ChoosedSellers) <-
+	.sort(ChoosedSellers, SortedSellers);
+	+choosedSellers(ChoosedSellers);
+	!buy.
 
-+!chooseSeller(LProd, NSellers) : oldSeller(S) & .member(S, LProd) <-
++!chooseSeller(LProd, 0, ChoosedSellers) <-
+	.sort(ChoosedSellers, SortedSellers);
+	+choosedSellers(SortedSellers);
+	!buy.
+
++!chooseSeller(LProd, NSellers, ChoosedSellers) : oldSeller(S) & .member(S, LProd) <-
 	//ask seller
 	.delete(S, LProd, UpdLProd);
-	!chooseSeller(UpdLprod, NSellers-1).
+	.concat(ChoosedSellers, [S], NewSellers);
+	!chooseSeller(UpdLprod, NSellers-1, NewSellers).
 
-+!chooseSeller(LProd, NSellers) : NSellers >0 <-
++!chooseSeller(LProd, NSellers, ChoosedSellers) : NSellers >0 <-
 	.length(LProd, NProd);
 	!boundRandom( NProd-1, Idx);
-	.print("Idx is ", Idx);
 	.nth(Idx, LProd, Seller);
 	//ask seller
-	.print("Selezionato negozio ", Seller);
 	.delete(Seller, LProd, UpdLProd);
-	!chooseSeller(UpdLProd, NSellers - 1).
-
+	.concat(ChoosedSellers, [Seller], NewSellers);
+	!chooseSeller(UpdLProd, NSellers - 1, NewSellers).
 
 +!startWork(Firm) : requiredWage(W) & maxWage(WageBound) <-
 	// informo l'azienda che accetto
 	.my_name(Me);
-	//.print(Me,": accepting job from", Firm);
 	.send(Firm, askOne, accept(Me, W), UnusedRes);
-	// alzo lo stipendio!!
 	!boundRandom(WageBound - W, UpdWage);
-	-+requiredWage(W + UpdWage);
+	-+requiredWage(W + UpdWage); // alzo lo stipendio!!
 	-+oldFirm(Firm);
 	// informo l'environment che per questo ciclo sono occupato
 	employed.
+	
++!buy : money(0) | choosedSellers([]) <-
+	abolish(sold(_,_));
+	goodsMarketClosed.
+	
++!buy : money(Money) & choosedSellers([[Price, Seller] | Tail])  <-
+	.send(Seller, tell, buy(Money));
+	-+choosedSellers(Tail).
+	
++sold(Goods, Price) :  money(Money) <-
+	-+money(Money - Goods * Price);
+	!buy.
 
+	

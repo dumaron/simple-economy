@@ -83,6 +83,14 @@ public class world extends Environment {
 				addPerceptToList(workers, "jobOfferOver");	
 			}
 		}
+		else if (act.getFunctor().equals("goodsMarketClosed")) {
+			if (++workerCount == workers.size()) {
+				workerCount = 0;
+				removePerceptToList(workers, "startGoodsMarket", false);
+				removePerceptToList(workers, "firmProduction(_,_,_)", true);
+				addPerceptToList(workers, "beginCycle");
+			}
+		}
 		else if (act.getFunctor().equals("unemployed")) {
 			unemployed++;
 		}
@@ -90,14 +98,15 @@ public class world extends Environment {
 			employed++;
 		}
 		else if (act.getFunctor().equals("endJobCycle")) {
-			Integer probab, i, production;
+			Integer probab, i, production, price;
 			probab=Integer.parseInt(act.getTerm(0).toString());
 			production=Integer.parseInt(act.getTerm(1).toString());
+			price = Integer.parseInt(act.getTerm(2).toString());
 			for(i=0; i<=probab; i++) {
 				addPerceptToList(workers, "firmVacancies("+ag+","+i+")");
 			}
-			for(i=0; i<production; i++) {
-				addPerceptToList(workers, "firmProduction("+ag+","+i+")");
+			for(i=0; i<=production; i++) {
+				addPerceptToList(workers, "firmProduction("+ag+","+price+","+i+")");
 			}
 			if (++firmCount == firms.size()) {
 				removePerceptToList(firms, "jobMarketClosed", false);

@@ -2,6 +2,7 @@ maxProduction(27).
 productionCoefficient(3).
 goods(0).
 capital(10000).
+price(50).
 
 !start.
 
@@ -17,7 +18,6 @@ capital(10000).
 	+targetProduction(TargProd);
 	Nwork = TargProd div C;
 	+neededWorkers(Nwork);
-	.print("nworkers", Nwork);
 	// mi presento a tutti gli altri agenti
 	.my_name(Me);
 	.broadcast(askOne, introduction(Me));
@@ -34,7 +34,6 @@ capital(10000).
 	.findall(Employed, accept(Employed, Wage), OldEmployedList);
 	.abolish(demand(_,_));
 	.abolish(accept(_,_));
-	//.print(OldEmployedList);
 	!updateWages(NewDemandsList, OldEmployedList, []).
 
 // piano per implementare la fedeltà dell'azienda verso il lavoratore
@@ -87,24 +86,21 @@ capital(10000).
 +!employ(E) <-
 	.nth(1, E, WorkerName);
 	.my_name(Me);
-	//.print(Me, ": sending job offer to", WorkerName);
-	//.send(WorkerName, tell, jobOffer(Me));
 	.send(WorkerName, askOne, jobOffer(Me), UnusedRes).
 
 +?accept(Worker, Wage) <-
 	+accept(Worker, Wage).
 
 +!payEmployed([]) <-
-	.print("Finito di pagà").
+	.random(T).
 
 +!payEmployed([[Employed, Wage]|Tail]) : capital(C) <-
 	.send(Employed, askOne, pay(Wage), W);
 	-+capital(C - Wage);
-	//.print("Das Kapitaal ", C - Wage);
 	!payEmployed(Tail).
 	
 // credenza attivata nella fase del ciclo in cui esso termina
-+jobMarketClosed : neededWorkers(N) & productionCoefficient(C) & goods(G) <-
++jobMarketClosed : neededWorkers(N) & productionCoefficient(C) & goods(G) & price(Price) <-
 	.findall([Worker, Wage], accept(Worker, Wage), L);
 	.length(L, Employed);
 	// informo l'environment sul mio dato occupazionale, così da avere al
@@ -113,7 +109,13 @@ capital(10000).
 	.abolish(introduction(_));
 	Production = Employed * C;
 	-+goods(Production + G);
-	//.print("production is: ", Production, "old goods are ", G);
 	!payEmployed(L);
-	endJobCycle(N - Employed, Production).
+	endJobCycle(N - Employed, Production, Price).
+
+@buy[atomic]	
++buy(Money)[source(S)] : price(Price) & goods(Goods) <-
+	NumGoods = Money div Price;
+	.min([Goods, NumGoods], SoldGoods);
+	-+goods(Goods-SoldGoods);
+	.send(S, tell, sold(SoldGoods, Price)).
 
