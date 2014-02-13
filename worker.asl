@@ -105,26 +105,21 @@ maxSellers(5).
 
 +?pay(Wage) : money(M) <-
 	-+money(M+Wage).
-
+	
 +startGoodsMarket : maxSellers(NSellers) <-
 	.findall([Price, Firm], firmProduction(Firm, Price, Production), LProd);
 	!chooseSeller(LProd, NSellers, []).
-
-+!chooseSeller([], NSellers, ChoosedSellers) <-
+	
++!chooseSeller(LProd, NSellers, ChoosedSellers) : LProd==[] | NSellers==0 <-
 	.sort(ChoosedSellers, SortedSellers);
-	+choosedSellers(ChoosedSellers);
+	//.print("new sellers", ChoosedSellers);
+	//.nth(0, SortedSellers, LowestPrice);
+	//-+bestPrice(LowestPrice);
+	//.print("choosesellers!");
+	-+choosedSellers(ChoosedSellers);
+	//.print("calling buy from chooseseller");
 	!buy.
 
-+!chooseSeller(LProd, 0, ChoosedSellers) <-
-	.sort(ChoosedSellers, SortedSellers);
-	+choosedSellers(SortedSellers);
-	!buy.
-
-+!chooseSeller(LProd, NSellers, ChoosedSellers) : oldSeller(S) & .member(S, LProd) <-
-	//ask seller
-	.delete(S, LProd, UpdLProd);
-	.concat(ChoosedSellers, [S], NewSellers);
-	!chooseSeller(UpdLprod, NSellers-1, NewSellers).
 
 +!chooseSeller(LProd, NSellers, ChoosedSellers) : NSellers >0 <-
 	.length(LProd, NProd);
@@ -144,17 +139,26 @@ maxSellers(5).
 	-+oldFirm(Firm);
 	// informo l'environment che per questo ciclo sono occupato
 	employed.
-	
+
 +!buy : money(0) | choosedSellers([]) <-
+	.print("finito!!!");
 	abolish(sold(_,_));
 	goodsMarketClosed.
-	
+
 +!buy : money(Money) & choosedSellers([[Price, Seller] | Tail])  <-
-	.send(Seller, tell, buy(Money));
-	-+choosedSellers(Tail).
-	
-+sold(Goods, Price) :  money(Money) <-
+	-+choosedSellers(Tail);
+	.my_name(Me);
+	.send(Seller, tell, buy(Money, Me)).
+	//.print("Sent to",Seller);
+	//.print(Tail).
+
+//@sold[atomic]
++sold(Goods, Price)[source(S)] :  money(Money) <-
+	//.print("entrato ", Goods);
+	//.print("ho comprato da", S);
+	-sold(Goods, Price)[source(S)];
 	-+money(Money - Goods * Price);
+	//.print("calling buy from +sold");
 	!buy.
 
 	

@@ -84,10 +84,13 @@ public class world extends Environment {
 			}
 		}
 		else if (act.getFunctor().equals("goodsMarketClosed")) {
-			if (++workerCount == workers.size()) {
+			workerCount++;
+			logger.info("goods market closed by "+ag);
+			if (workerCount == workers.size()) {
 				workerCount = 0;
 				removePerceptToList(workers, "startGoodsMarket", false);
 				removePerceptToList(workers, "firmProduction(_,_,_)", true);
+				//removePerceptToList(firms, "buy(_)", true);
 				addPerceptToList(workers, "beginCycle");
 			}
 		}
