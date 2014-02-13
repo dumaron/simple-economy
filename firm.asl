@@ -113,19 +113,13 @@ price(50).
 	endJobCycle(N - Employed, Production, Price).
 
 @buy1[atomic]
-+buy(Money, Worker) : price(Price) & goods(Goods) <-
-	//-buy(Money,Worker);
-	.abolish(buy(Money, Worker));
++buy(Money)[source(Worker)] : price(Price) & goods(Goods) <-
+	//-buy(Money)[source(Worker)];
+	.abolish(buy(Money)[source(Worker)]);
 	NumGoods = Money div Price;
 	.min([Goods, NumGoods], SoldGoods);
 	-+goods(Goods-SoldGoods);
-	//.print("respond #2 to ", S);
-	.send(Worker, tell, sold(SoldGoods, Price));
-	!test.
-	//.print("buy", Money, "from", S).
-	//.print("SOld goods", SoldGoods).
+	.send(Worker, tell, sold(SoldGoods, Price)).
 
-+!test <-
-	.findall([Money, Worker], buy(Money,Worker), L);
-	.print(L).
+
 

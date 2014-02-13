@@ -112,12 +112,9 @@ maxSellers(5).
 	
 +!chooseSeller(LProd, NSellers, ChoosedSellers) : LProd==[] | NSellers==0 <-
 	.sort(ChoosedSellers, SortedSellers);
-	//.print("new sellers", ChoosedSellers);
 	//.nth(0, SortedSellers, LowestPrice);
 	//-+bestPrice(LowestPrice);
-	//.print("choosesellers!");
 	-+choosedSellers(ChoosedSellers);
-	//.print("calling buy from chooseseller");
 	!buy.
 
 
@@ -141,24 +138,16 @@ maxSellers(5).
 	employed.
 
 +!buy : money(0) | choosedSellers([]) <-
-	.print("finito!!!");
 	abolish(sold(_,_));
 	goodsMarketClosed.
 
 +!buy : money(Money) & choosedSellers([[Price, Seller] | Tail])  <-
 	-+choosedSellers(Tail);
-	.my_name(Me);
-	.send(Seller, tell, buy(Money, Me)).
-	//.print("Sent to",Seller);
-	//.print(Tail).
+	.send(Seller, tell, buy(Money)).
 
-//@sold[atomic]
 +sold(Goods, Price)[source(S)] :  money(Money) <-
-	//.print("entrato ", Goods);
-	//.print("ho comprato da", S);
 	-sold(Goods, Price)[source(S)];
 	-+money(Money - Goods * Price);
-	//.print("calling buy from +sold");
 	!buy.
 
 	
