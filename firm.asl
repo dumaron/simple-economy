@@ -91,23 +91,26 @@ price(50).
 +?accept(Worker, Wage) <-
 	+accept(Worker, Wage).
 
-+!payEmployed([]) <-
-	.random(T).
++!payEmployed([]).
 
-+!payEmployed([[Employed, Wage]|Tail]) : capital(C) <-
++!payEmployed([[Employed, Wage]|Tail]) : capital(C) & totalWage(TW) <-
 	.send(Employed, askOne, pay(Wage), W);
+	-+totalWage(TW+Wage);
 	-+capital(C - Wage);
 	!payEmployed(Tail).
 	
 // credenza attivata nella fase del ciclo in cui esso termina
 +jobMarketClosed : neededWorkers(N) & productionCoefficient(C) & goods(G) & price(Price) <-
 	.findall([Worker, Wage], accept(Worker, Wage), L);
+	-+totalWage(0);
+	-+production(0);
 	.length(L, Employed);
 	// informo l'environment sul mio dato occupazionale, così da avere al
 	// prossimo ciclo una probabilità di trovare lavoratori proporzionale a 
 	// questo valore
 	.abolish(introduction(_));
 	Production = Employed * C;
+	-+production(Production);
 	-+goods(Production + G);
 	!payEmployed(L);
 	endJobCycle(N - Employed, Production, Price).

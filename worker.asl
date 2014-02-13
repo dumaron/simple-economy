@@ -109,14 +109,28 @@ maxSellers(5).
 +startGoodsMarket : maxSellers(NSellers) <-
 	.findall([Price, Firm], firmProduction(Firm, Price, Production), LProd);
 	!chooseSeller(LProd, NSellers, []).
-	
-+!chooseSeller(LProd, NSellers, ChoosedSellers) : LProd==[] | NSellers==0 <-
-	.sort(ChoosedSellers, SortedSellers);
-	//.nth(0, SortedSellers, LowestPrice);
-	//-+bestPrice(LowestPrice);
-	-+choosedSellers(ChoosedSellers);
+
++!chooseSeller(LProd, NSellers, ChosenSellers) : bestPrice([P,F]) & (LProd==[] | NSellers==0) <-
+	.sort(ChosenSellers, SortedSellers);
+	if(.member([_,F], SortedSellers)) {
+		.delete([_,F], SortedSellers, RemovedL);
+	}
+	else {
+		.length(SortedSellers, L);
+		.delete(L, SortedSellers, RemovedL);
+	}
+	.concat([[P,F]] ,RemovedL, FinalSellers);
+	.nth(0, SortedSellers, LowestPrice);
+	-+bestPrice(LowestPrice);
+	-+chosenSellers(FinalSellers);
 	!buy.
 
++!chooseSeller(LProd, NSellers, ChosenSellers) : LProd==[] | NSellers==0 <-
+	.sort(ChosenSellers, SortedSellers);
+	.nth(0, SortedSellers, LowestPrice);
+	-+bestPrice(LowestPrice);
+	-+chosenSellers(ChosenSellers);
+	!buy.
 
 +!chooseSeller(LProd, NSellers, ChoosedSellers) : NSellers >0 <-
 	.length(LProd, NProd);
@@ -137,12 +151,12 @@ maxSellers(5).
 	// informo l'environment che per questo ciclo sono occupato
 	employed.
 
-+!buy : money(0) | choosedSellers([]) <-
++!buy : money(0) | chosenSellers([]) <-
 	abolish(sold(_,_));
 	goodsMarketClosed.
 
-+!buy : money(Money) & choosedSellers([[Price, Seller] | Tail])  <-
-	-+choosedSellers(Tail);
++!buy : money(Money) & chosenSellers([[Price, Seller] | Tail])  <-
+	-+chosenSellers(Tail);
 	.send(Seller, tell, buy(Money)).
 
 +sold(Goods, Price)[source(S)] :  money(Money) <-
@@ -150,4 +164,4 @@ maxSellers(5).
 	-+money(Money - Goods * Price);
 	!buy.
 
-	
+

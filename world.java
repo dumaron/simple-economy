@@ -11,7 +11,7 @@ import jason.mas2j.*;
 public class world extends Environment {
 	// any class members needed...
 	
-	Integer nfirm, nworkers, employed, unemployed, cycle=1, firmCount, workerCount;
+	Integer nfirm, nworkers, employed, unemployed, cycle=1, firmCount, workerCount, currAggrPrice=0, oldAggrPrice;
 	List<String> firms;
 	List<String> workers;
 	
@@ -84,9 +84,8 @@ public class world extends Environment {
 			}
 		}
 		else if (act.getFunctor().equals("goodsMarketClosed")) {
-			workerCount++;
-			logger.info("goods market closed by "+ag);
-			if (workerCount == workers.size()) {
+			//logger.info("goods market closed by "+ag);
+			if (++workerCount == workers.size()) {
 				workerCount = 0;
 				removePerceptToList(workers, "startGoodsMarket", false);
 				removePerceptToList(workers, "firmProduction(_,_,_)", true);
@@ -105,6 +104,7 @@ public class world extends Environment {
 			probab=Integer.parseInt(act.getTerm(0).toString());
 			production=Integer.parseInt(act.getTerm(1).toString());
 			price = Integer.parseInt(act.getTerm(2).toString());
+			currAggrPrice+=price;
 			for(i=0; i<=probab; i++) {
 				addPerceptToList(workers, "firmVacancies("+ag+","+i+")");
 			}
@@ -112,9 +112,14 @@ public class world extends Environment {
 				addPerceptToList(workers, "firmProduction("+ag+","+price+","+i+")");
 			}
 			if (++firmCount == firms.size()) {
+				currAggrPrice=currAggrPrice/firms.size();
+				removePerceptToList(firms, "aggregatePrice(_)", true);
 				removePerceptToList(firms, "jobMarketClosed", false);
 				firmCount = 0;
+				addPerceptToList(firms, "aggregatePrice("+oldAggrPrice+")");
 				addPerceptToList(workers, "startGoodsMarket");
+				oldAggrPrice=currAggrPrice;
+				currAggrPrice=0;
 			}
 		} else if (act.getFunctor().equals("introduced")) {
 			if (++firmCount == firms.size()) {
