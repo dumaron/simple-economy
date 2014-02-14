@@ -45,13 +45,13 @@ price(50).
 		NewProdDemand = Production * (1 + R);
 		NewWorkersDemand = math.round(NewProdDemand / PD);
 		-+neededWorkers(NewWorkersDemand);
-		.print(NewWorkersDemand);
+		//.print(NewWorkersDemand);
 	} else {
 		if (G>0 & Price < NP) {
 			NewProdDemand = Production * (1 - R);
 			NewWorkersDemand = math.round(NewProdDemand / PD);
 			-+neededWorkers(NewWorkersDemand);
-			.print(NewWorkersDemand);
+			//.print(NewWorkersDemand);
 		}
 	}
 .
@@ -153,8 +153,8 @@ price(50).
 			NewPrice = Price;
 		}
 	}
-	-+price(NewPrice);
-	.print(NewPrice).
+	-+price(NewPrice).
+	//.print(NewPrice).
 	
 
 +!calculatePrice(NewPrice) :  price(Price) <-
