@@ -84,12 +84,10 @@ public class world extends Environment {
 			}
 		}
 		else if (act.getFunctor().equals("goodsMarketClosed")) {
-			//logger.info("goods market closed by "+ag);
 			if (++workerCount == workers.size()) {
 				workerCount = 0;
 				removePerceptToList(workers, "startGoodsMarket", false);
 				removePerceptToList(workers, "firmProduction(_,_,_)", true);
-				//removePerceptToList(firms, "buy(_)", true);
 				addPerceptToList(workers, "beginCycle");
 			}
 		}
@@ -113,10 +111,12 @@ public class world extends Environment {
 			}
 			if (++firmCount == firms.size()) {
 				currAggrPrice=currAggrPrice/firms.size();
-				removePerceptToList(firms, "aggregatePrice(_)", true);
+				removePerceptToList(firms, "oldAggregatePrice(_)", true);
+				removePerceptToList(firms, "newAggregatePrice(_)", true);
 				removePerceptToList(firms, "jobMarketClosed", false);
 				firmCount = 0;
-				addPerceptToList(firms, "aggregatePrice("+oldAggrPrice+")");
+				addPerceptToList(firms, "oldAggregatePrice("+oldAggrPrice+")");
+				addPerceptToList(firms, "newAggregatePrice("+currAggrPrice+")");
 				addPerceptToList(workers, "startGoodsMarket");
 				oldAggrPrice=currAggrPrice;
 				currAggrPrice=0;

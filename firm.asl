@@ -34,8 +34,31 @@ price(50).
 	.findall(Employed, accept(Employed, Wage), OldEmployedList);
 	.abolish(demand(_,_));
 	.abolish(accept(_,_));
+	!changeWorkDemand;
 	!updateWages(NewDemandsList, OldEmployedList, []).
 
+
++!changeWorkDemand : newAggregatePrice(NP) & price(Price) & goods(G) &
+	production(Production) & productionCoefficient(PD) <-
+	.random(R);
+	if (G == 0 & Price >= NP) {
+		NewProdDemand = Production * (1 + R);
+		NewWorkersDemand = math.round(NewProdDemand / PD);
+		-+neededWorkers(NewWorkersDemand);
+		.print(NewWorkersDemand);
+	} else {
+		if (G>0 & Price < NP) {
+			NewProdDemand = Production * (1 - R);
+			NewWorkersDemand = math.round(NewProdDemand / PD);
+			-+neededWorkers(NewWorkersDemand);
+			.print(NewWorkersDemand);
+		}
+	}
+.
+
++!changeWorkDemand.
+
+	
 // piano per implementare la fedeltà dell'azienda verso il lavoratore
 // restituisce una lista dei vecchi impiegati con la loro nuova richeista di stipendio
 +!updateWages(New, Old, Res) <-
@@ -100,7 +123,7 @@ price(50).
 	!payEmployed(Tail).
 	
 // credenza attivata nella fase del ciclo in cui esso termina
-+jobMarketClosed : neededWorkers(N) & productionCoefficient(C) & goods(G) & price(Price) <-
++jobMarketClosed : neededWorkers(N) & productionCoefficient(C) & goods(G) & price(Price)  <-
 	.findall([Worker, Wage], accept(Worker, Wage), L);
 	-+totalWage(0);
 	-+production(0);
@@ -113,7 +136,29 @@ price(50).
 	-+production(Production);
 	-+goods(Production + G);
 	!payEmployed(L);
-	endJobCycle(N - Employed, Production, Price).
+	!calculatePrice(NewPrice);
+	endJobCycle(N - Employed, Production, NewPrice).
+
++!calculatePrice(NewPrice) : totalWage(TW) & production(P) & oldAggregatePrice(AP) & price(Price) & goods(G) & P>0 <-
+	LowestPrice = TW div P;
+	.random(R);
+	if (Price < AP & G == 0) {
+		ModPrice = math.round(Price * (1+R));
+		.max([LowestPrice, ModPrice], NewPrice);
+	} else {
+		if (Price >= AP & G > 0) {
+			ModPrice = math.round(Price * (1-R));
+			.max([LowestPrice, ModPrice], NewPrice);	
+		} else {
+			NewPrice = Price;
+		}
+	}
+	-+price(NewPrice);
+	.print(NewPrice).
+	
+
++!calculatePrice(NewPrice) :  price(Price) <-
+	NewPrice = Price.
 
 @buy1[atomic]
 +buy(Money)[source(Worker)] : price(Price) & goods(Goods) <-
@@ -123,6 +168,3 @@ price(50).
 	.min([Goods, NumGoods], SoldGoods);
 	-+goods(Goods-SoldGoods);
 	.send(Worker, tell, sold(SoldGoods, Price)).
-
-
-
