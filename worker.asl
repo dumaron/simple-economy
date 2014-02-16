@@ -21,6 +21,7 @@ maxSellers(5).
 	-unemployed; // almeno c'è la buona volontà
 	.findall(Firm, firmVacancies(Firm, N), FirmVac);
 	-+firmList(FirmVac);
+	.print(FirmVac);
 	!sendDemands.
 
 +!sendDemands : firmList(L) & maxDemand(M) & oldFirm(Old) <-

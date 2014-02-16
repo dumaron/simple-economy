@@ -39,7 +39,7 @@ price(50).
 
 
 +!changeWorkDemand : newAggregatePrice(NP) & price(Price) & goods(G) &
-	production(Production) & productionCoefficient(PD) <-
+	production(Production) & productionCoefficient(PD) & Production >0 <-
 	.random(R);
 	if (G == 0 & Price >= NP) {
 		NewProdDemand = Production * (1 + R);
@@ -51,7 +51,6 @@ price(50).
 			NewProdDemand = Production * (1 - R);
 			NewWorkersDemand = math.round(NewProdDemand / PD);
 			-+neededWorkers(NewWorkersDemand);
-			//.print(NewWorkersDemand);
 		}
 	}
 .
@@ -113,8 +112,14 @@ price(50).
 
 +?accept(Worker, Wage) <-
 	+accept(Worker, Wage).
+	
++!payEmployed(L) : capital(C) & C<0 <-
+	.print("Bancarotta");
+	.my_name(Me);
+	.kill_agent(Me).
 
-+!payEmployed([]).
++!payEmployed([]) : capital(C)<-
+	.print(C).
 
 +!payEmployed([[Employed, Wage]|Tail]) : capital(C) & totalWage(TW) <-
 	.send(Employed, askOne, pay(Wage), W);
