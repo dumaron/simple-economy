@@ -3,9 +3,12 @@ import jason.environment.*;
 import java.lang.Integer;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.logging.Logger;
 import java.io.FileInputStream;
 import jason.mas2j.*;
+import jason.runtime.Settings;
+
 
 
 public class world extends Environment {
@@ -15,6 +18,8 @@ public class world extends Environment {
 	List<String> firms;
 	List<String> workers;
 	List<String> deadFirms;
+	List<String> respawnNext;
+	Boolean firstCycle=true;
 	
     static Logger logger = Logger.getLogger(world.class.getName());
 
@@ -24,6 +29,7 @@ public class world extends Environment {
 		workers=new ArrayList<String>();
 		firms = new ArrayList<String>();
 		deadFirms = new ArrayList<String>();
+		respawnNext = new ArrayList<String>();
 		try {
 			jason.mas2j.parser.mas2j parser = new jason.mas2j.parser.mas2j(new FileInputStream(args[0]));
 			MAS2JProject project = parser.mas();
@@ -32,7 +38,7 @@ public class world extends Environment {
 					for (int i=1; i<=ap.qty; i++) {
 						firms.add("firm"+i);
 					}
-				} else {
+				} else if(ap.name.equals("worker")) {
 					for (int i=1; i<=ap.qty; i++) {
 						workers.add("worker"+i);
 					}
@@ -123,28 +129,48 @@ public class world extends Environment {
 					currAggrPrice=0;
 				}
 				break;
-			case "introduced": 
-				if (++firmCount == firms.size()) {
+			case "introduced":
+				logger.info("introducing "+ag+" "+firmCount); 
+				if (firstCycle && ++firmCount == firms.size()) {
 					firmCount = 0;
+					firstCycle=false;
 					addPerceptToList(workers, "firstCycle");
-				}	
+				}
+				else if(!firstCycle && ++firmCount == firms.size()) {
+					respawnNext.clear();
+				}
 				break;
 			case "kill_me": 
 				bankrupt++;
 				deadFirms.add(ag);
 				break;
-			case "in_business": business++; break; 
+			case "in_business": business++; break;
 		}
 		
 		if (bankrupt + business == firms.size()) {
 			bankrupt = business = 0;
 			removePerceptToList(firms, "endCycle", false);
+			removePerceptToList(workers, "respawned(_)", true);
+			for (String respawn : respawnNext) {
+				Settings settings = new Settings();
+				List<String> archClass = new ArrayList<String>();
+				logger.info("respawning "+respawn);
+				addPercept("creator", Literal.parseLiteral("respawnFirm("+respawn+")"));
+				addPerceptToList(workers, "respawned("+respawn+")");
+				removePerceptToList(workers, "dead("+respawn+")", false);
+			}
 			for (String dead:deadFirms) {
 				addPerceptToList(workers, "dead("+dead+")");
 				firms.remove(dead);
 			}
+			if(respawnNext.isEmpty()){
+				logger.info("respawn empty");
+				respawnNext= new ArrayList<String>(deadFirms);
+				deadFirms.clear();
+				addPerceptToList(workers, "beginCycle");
+			}
+			respawnNext=new ArrayList<String>(deadFirms);
 			deadFirms.clear();
-			addPerceptToList(workers, "beginCycle");
 		}
 		
 		if (employed + unemployed == workers.size()) {

@@ -9,5 +9,6 @@ MAS simpleEconomy {
     agents: 
 		worker #15;
 		firm #2;
+		creator #1;
 }
 

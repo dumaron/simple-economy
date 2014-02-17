@@ -19,6 +19,7 @@ maxSellers(5).
 +beginCycle <-
 	-unemployed; // almeno c'è la buona volontà
 	!buryDeads;
+	!respawn;
 	.findall(Firm, firmVacancies(Firm, N), FirmVac);
 	-+firmList(FirmVac);
 	!sendDemands.
@@ -29,11 +30,25 @@ maxSellers(5).
 	!bury(Deads).
 
 +!bury([Dead | Tail]) <-
-	.abolish(firmVacancies(Dead, _));
+	.abolish(firmVacancies(Dead,_));
 	!bury(Tail).
 
 +!bury([]).
 	
++!respawn <-
+	.findall(Firm, respawned(Firm), LRespawn);
+	.abolish(respawned(_));
+	.findall(Firm, respawned(Firm), Tuam);
+	.print("tuamadre: ", Tuam);
+	.abolish(dead(_));
+	!respawnFirm(LRespawn).
+
++!respawnFirm([Firm | Tail]) <-
+	.print("respawining", Firm);
+	-introduction(Firm);
+	+firmVacancies(Firm, 1).
+	
++!respawnFirm([]).
 
 +!sendDemands : firmList(L) & maxDemand(M) & oldFirm(Old) & .member(Old, L) <-
 	!sendDemand(L, M, Old).

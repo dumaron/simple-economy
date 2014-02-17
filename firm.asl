@@ -22,6 +22,7 @@ price(50).
 +!start : maxProduction(MProd) & productionCoefficient(C) <-
 	// imposto un valore intero casuale limitato da 1 e maxWorkers per definire
 	// il numero di lavoratori di cui l'azienda ha bisogno
+	.print("parto");
 	!boundRandom(MProd, TargProd);
 	+targetProduction(TargProd);
 	Nwork = TargProd div C;
