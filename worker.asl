@@ -17,17 +17,28 @@ maxSellers(5).
 
 // Indichiamo al lavoratore che è iniziato un nuovo ciclo di mercato 
 +beginCycle <-
-	-beginCycle;
 	-unemployed; // almeno c'è la buona volontà
+	!buryDeads;
 	.findall(Firm, firmVacancies(Firm, N), FirmVac);
 	-+firmList(FirmVac);
-	.print(FirmVac);
 	!sendDemands.
+	
++!buryDeads <-
+	.findall(Firm, dead(Firm), Deads);
+	.findall(Firm, firmVacancies(Firm, N), FirmVac);
+	!bury(Deads).
 
-+!sendDemands : firmList(L) & maxDemand(M) & oldFirm(Old) <-
++!bury([Dead | Tail]) <-
+	.abolish(firmVacancies(Dead, _));
+	!bury(Tail).
+
++!bury([]).
+	
+
++!sendDemands : firmList(L) & maxDemand(M) & oldFirm(Old) & .member(Old, L) <-
 	!sendDemand(L, M, Old).
 
-+!sendDemands : firmList(L) & maxDemand(M) & not oldFirm(Old) <-
++!sendDemands : firmList(L) & maxDemand(M) <-
 	!sendDemand(L, M).
 	
 // Piano per inviare una richiesta al vecchio datore di lavoro
@@ -73,7 +84,7 @@ maxSellers(5).
 		+unemployed;
 	}.
 
-+?jobOffer(Firm) <- 
++?jobOffer(Firm) <-
 	+jobOffer(Firm).
 	
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
@@ -81,12 +92,14 @@ maxSellers(5).
 +jobOfferOver : not oldFirm(F) <-
 	.findall(Firm, jobOffer(Firm), Firms);
 	.abolish(jobOffer(_));
+	.findall(Firm, jobOffer(Firm), Firms2);
 	!chooseNewFirm(Firms).
 
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
 // ciclo precedente ero occupato
 +jobOfferOver : oldFirm(Old) <-
 	.findall(Firm, jobOffer(Firm), Firms);
+	.abolish(jobOffer(_));
 	if( .member(Old, Firms) ) {
 		// torno a lavorare per il mio vecchio datore di lavoro solo se ha 
 		// rinnovato la sua richiesta nei miei confronti
@@ -156,13 +169,15 @@ maxSellers(5).
 	abolish(sold(_,_));
 	goodsMarketClosed.
 
-+!buy : money(Money) & chosenSellers([[Price, Seller] | Tail])  <-
++!buy : money(Money) & chosenSellers([[Price, Seller] | Tail]) & firmList(Firms)  <-
 	-+chosenSellers(Tail);
-	.send(Seller, tell, buy(Money)).
+	if (.member(Seller, Firms)) { 
+		.send(Seller, tell, buy(Money));
+	} else {
+		!buy;
+	}.
 
 +sold(Goods, Price)[source(S)] :  money(Money) <-
 	-sold(Goods, Price)[source(S)];
 	-+money(Money - Goods * Price);
 	!buy.
-
-

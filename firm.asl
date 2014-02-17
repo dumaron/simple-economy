@@ -6,6 +6,14 @@ price(50).
 
 !start.
 
++endCycle : capital(C) & .my_name(Me) & C<0 <-
+	kill_me;
+	.kill_agent(Me).
+	
+
++endCycle <-
+	in_business.
+
 // piano per generare un intero casuale limitato superiorimente da Bound
 +!boundRandom(Bound, Result) <-
 	.random(R);
@@ -57,7 +65,6 @@ price(50).
 
 +!changeWorkDemand.
 
-	
 // piano per implementare la fedeltà dell'azienda verso il lavoratore
 // restituisce una lista dei vecchi impiegati con la loro nuova richeista di stipendio
 +!updateWages(New, Old, Res) <-
@@ -112,14 +119,8 @@ price(50).
 
 +?accept(Worker, Wage) <-
 	+accept(Worker, Wage).
-	
-+!payEmployed(L) : capital(C) & C<0 <-
-	.print("Bancarotta");
-	.my_name(Me);
-	.kill_agent(Me).
 
-+!payEmployed([]) : capital(C)<-
-	.print(C).
++!payEmployed([]).
 
 +!payEmployed([[Employed, Wage]|Tail]) : capital(C) & totalWage(TW) <-
 	.send(Employed, askOne, pay(Wage), W);
@@ -158,9 +159,7 @@ price(50).
 			NewPrice = Price;
 		}
 	}
-	-+price(NewPrice).
-	//.print(NewPrice).
-	
+	-+price(NewPrice).	
 
 +!calculatePrice(NewPrice) :  price(Price) <-
 	NewPrice = Price.
