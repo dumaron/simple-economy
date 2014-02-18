@@ -14,7 +14,8 @@ import jason.runtime.Settings;
 public class world extends Environment {
 	// any class members needed...
 	
-	Integer nfirm, nworkers, employed, unemployed, cycle=1, firmCount, workerCount, currAggrPrice=0, oldAggrPrice, bankrupt, business, toRespawn;
+	Integer nfirm, nworkers, employed, unemployed, cycle=1, firmCount, 
+	workerCount, currAggrPrice=0, oldAggrPrice, bankrupt, business, toRespawn, totalProduction, totalIncome;
 	List<String> firms;
 	List<String> workers;
 	List<String> deadFirms;
@@ -54,6 +55,8 @@ public class world extends Environment {
 		bankrupt = new Integer(0);
 		business = new Integer(0);
 		toRespawn = new Integer(0);
+		totalProduction = new Integer(0);
+		totalIncome = new Integer(0);
 	}
 	@Override
 	public void stop() {
@@ -95,10 +98,11 @@ public class world extends Environment {
 		
 		switch (act.getFunctor()) {
 			case "sentAllDemand": 
+
 				if(++workerCount == workers.size()) {
 					workerCount = 0;
 					removePerceptToList(workers, "beginCycle", false);
-					addPerceptToList(firms, "demandOver");
+					addPerceptToList(firms, "jobRequestOver");
 				}
 				break;
 			case "sentAllJobOffer": 
@@ -107,22 +111,27 @@ public class world extends Environment {
 					addPerceptToList(workers, "jobOfferOver");	
 				}
 				break;
-			case "goodsMarketClosed": 
+			case "goodsMarketClosed":
+				Integer income = Integer.parseInt(act.getTerm(0).toString());
+				totalIncome+=income;
 				if (++workerCount == workers.size()) {
 					workerCount = 0;
 					removePerceptToList(workers, "startGoodsMarket", false);
 					removePerceptToList(workers, "firmProduction(_,_,_)", true);
 					addPerceptToList(firms, "endCycle");
+					logger.info("PIL: "+totalIncome);
+					totalIncome=0;
 				}
 				break;
 			case "unemployed": unemployed++; break;
 			case "employed" : employed++; break;
-			case "endJobCycle": 
+			case "jobMarketClosed": 
 				Integer probab, i, production, price;
 				probab=Integer.parseInt(act.getTerm(0).toString());
 				production=Integer.parseInt(act.getTerm(1).toString());
 				price = Integer.parseInt(act.getTerm(2).toString());
 				currAggrPrice+=price;
+				totalProduction+=production;
 				for(i=0; i<=probab; i++) {
 					addPerceptToList(workers, "firmVacancies("+ag+","+i+")");
 				}
@@ -131,6 +140,8 @@ public class world extends Environment {
 				}
 				if (++firmCount == firms.size()) {
 					currAggrPrice=currAggrPrice/firms.size();
+					logger.info("Prezzo aggregato: "+currAggrPrice);
+					logger.info("Produzione totale: "+totalProduction);
 					removePerceptToList(firms, "oldAggregatePrice(_)", true);
 					removePerceptToList(firms, "newAggregatePrice(_)", true);
 					removePerceptToList(firms, "jobMarketClosed", false);
@@ -140,6 +151,7 @@ public class world extends Environment {
 					addPerceptToList(workers, "startGoodsMarket");
 					oldAggrPrice=currAggrPrice;
 					currAggrPrice=0;
+					totalProduction=0;
 				}
 				break;
 			case "introduced":
@@ -182,7 +194,7 @@ public class world extends Environment {
 			}
 			deadFirms.clear();
 			if (firms.isEmpty()) {
-				logger.info("Nel ciclo di lavoro "+ cycle++ +" tutte le aziende sono chiuse, 0 occupati :( ");
+				logger.info("Nel ciclo di lavoro "+ cycle++ +" ho 0 occupati e "+workers.size()+" disoccupati");
 				respawned = respawn();
 				toRespawn = respawnNext.size();
 				respawnNext.clear();
@@ -198,7 +210,7 @@ public class world extends Environment {
 			logger.info("Nel ciclo di lavoro "+ cycle++ +" ho "+employed+ " occupati e "+unemployed+" disoccupati.");
 			employed = unemployed = 0;
 			addPerceptToList(firms, "jobMarketClosed");
-			removePerceptToList(firms, "demandOver", false);
+			removePerceptToList(firms, "jobRequestOver", false);
 			removePerceptToList(workers, "jobOfferOver", false);
 		}
 		return true;

@@ -10,7 +10,6 @@ price(50).
 	kill_me;
 	.kill_agent(Me).
 	
-
 +endCycle <-
 	in_business.
 
@@ -22,7 +21,6 @@ price(50).
 +!start : maxProduction(MProd) & productionCoefficient(C) <-
 	// imposto un valore intero casuale limitato da 1 e maxWorkers per definire
 	// il numero di lavoratori di cui l'azienda ha bisogno
-
 	!boundRandom(MProd, TargProd);
 	.max([TargProd, C], TP);
 	+targetProduction(TP);
@@ -33,17 +31,17 @@ price(50).
 	.broadcast(askOne, introduction(Me));
 	introduced.
 
-+?demand(Worker, Wage) <- 
-	+demand(Worker, Wage).
++?jobRequest(Worker, Wage) <- 
+	+jobRequest(Worker, Wage).
 
 // credenza che indica una nuova fase del ciclo, in cui tutti i curriculum
 // sono stati inviati dai lavoratori
-+demandOver <-
-	.findall([W, Worker], demand(Worker,W), NewDemandsList);
-	+demands(NewDemandsList);
-	.findall(Employed, accept(Employed, Wage), OldEmployedList);
-	.abolish(demand(_,_));
-	.abolish(accept(_,_));
++jobRequestOver <-
+	.findall([W, Worker], jobRequest(Worker,W), NewDemandsList);
+	+jobRequests(NewDemandsList);
+	.findall(Employed, jobAccept(Employed, Wage), OldEmployedList);
+	.abolish(jobRequest(_,_));
+	.abolish(jobAccept(_,_));
 	!changeWorkDemand;
 	!updateWages(NewDemandsList, OldEmployedList, []).
 
@@ -91,8 +89,8 @@ price(50).
 	}
 	.
 
-+!chooseWorkers(OldEmployedDemandsList) : neededWorkers(Nwork) & demands(DemandsList) <-
-	-demands(DemandsList);
++!chooseWorkers(OldEmployedDemandsList) : neededWorkers(Nwork) & jobRequests(DemandsList) <-
+	-jobRequests(DemandsList);
 	.difference(DemandsList, OldEmployedDemandsList, NewEmployedDemandsList);
 	.sort(NewEmployedDemandsList, SortedNEDL);
 	.concat(OldEmployedDemandsList, SortedNEDL, Demands);
@@ -119,8 +117,8 @@ price(50).
 	.my_name(Me);
 	.send(WorkerName, askOne, jobOffer(Me), UnusedRes).
 
-+?accept(Worker, Wage) <-
-	+accept(Worker, Wage).
++?jobAccept(Worker, Wage) <-
+	+jobAccept(Worker, Wage).
 
 +!payEmployed([]).
 
@@ -131,11 +129,11 @@ price(50).
 	!payEmployed(Tail).
 	
 // credenza attivata nella fase del ciclo in cui esso termina
-+jobMarketClosed : neededWorkers(N) & productionCoefficient(C) & goods(G) & price(Price)  <-
-	.findall([Worker, Wage], accept(Worker, Wage), L);
++jobMarketClosed : neededWorkers(N) & productionCoefficient(C) & goods(G) & price(Price) <-
+	.findall([Worker, Wage], jobAccept(Worker, Wage), AcceptList);
 	-+totalWage(0);
 	-+production(0);
-	.length(L, Employed);
+	.length(AcceptList, Employed);
 	// informo l'environment sul mio dato occupazionale, così da avere al
 	// prossimo ciclo una probabilità di trovare lavoratori proporzionale a 
 	// questo valore
@@ -143,9 +141,9 @@ price(50).
 	Production = Employed * C;
 	-+production(Production);
 	-+goods(Production + G);
-	!payEmployed(L);
+	!payEmployed(AcceptList);
 	!calculatePrice(NewPrice);
-	endJobCycle(N - Employed, Production, NewPrice).
+	jobMarketClosed(N - Employed, Production, NewPrice).
 
 +!calculatePrice(NewPrice) : totalWage(TW) & production(P) & oldAggregatePrice(AP) & price(Price) & goods(G) & P>0 <-
 	LowestPrice = TW div P;
@@ -167,10 +165,11 @@ price(50).
 	NewPrice = Price.
 
 @buy1[atomic]
-+buy(Money)[source(Worker)] : price(Price) & goods(Goods) <-
++buy(Money)[source(Worker)] : price(Price) & goods(Goods) & capital(C) <-
 	//-buy(Money)[source(Worker)];
 	.abolish(buy(Money)[source(Worker)]);
 	NumGoods = Money div Price;
 	.min([Goods, NumGoods], SoldGoods);
 	-+goods(Goods-SoldGoods);
+	-+capital(C + SoldGoods*Price);
 	.send(Worker, tell, sold(SoldGoods, Price)).

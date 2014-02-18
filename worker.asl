@@ -3,6 +3,12 @@ maxWage(1000). // stipendio massimo (ahahaha)
 minWage(1). // stipendio minimo
 money(1000).
 maxSellers(5).
+expenses(0).
+
+// piano per generare un intero casuale limitato superiorimente da Bound	
++!boundRandom(Bound, Result) <-
+	.random(R);
+	Result = math.round(Bound * R).
 
 +?introduction(Source) <- 
 	+introduction(Source).
@@ -13,7 +19,7 @@ maxSellers(5).
 	+firmList(Firms);
 	!boundRandom(W, Wage);
 	+requiredWage(Wage);
-	!sendDemands.
+	!sendAllDemands.
 
 // Indichiamo al lavoratore che è iniziato un nuovo ciclo di mercato 
 +beginCycle <-
@@ -22,7 +28,7 @@ maxSellers(5).
 	!respawn;
 	.findall(Firm, firmVacancies(Firm, N), FirmVac);
 	-+firmList(FirmVac);
-	!sendDemands.
+	!sendAllDemands.
 	
 +!buryDeads <-
 	.findall(Firm, dead(Firm), Deads);
@@ -48,17 +54,17 @@ maxSellers(5).
 	
 +!respawnFirm([]).
 
-+!sendDemands : firmList(L) & maxDemand(M) & oldFirm(Old) & .member(Old, L) <-
++!sendAllDemands : firmList(L) & maxDemand(M) & oldEmployer(Old) & .member(Old, L) <-
 	!sendDemand(L, M, Old).
 
-+!sendDemands : firmList(L) & maxDemand(M) <-
++!sendAllDemands : firmList(L) & maxDemand(M) <-
 	!sendDemand(L, M).
 	
 // Piano per inviare una richiesta al vecchio datore di lavoro
 +!sendDemand(L, M, Old) : requiredWage(Wage) <-
 	.delete(Old, L, ReducedL);
 	.my_name(Me);
-	.send(Old, askOne, demand(Me, Wage), Unused);
+	.send(Old, askOne, jobRequest(Me, Wage), Unused);
 	!sendDemand(ReducedL, M-1).
 
 // Piano per inviare una richiesta di lavoro agli imprenditori che conosco, 
@@ -70,7 +76,7 @@ maxSellers(5).
 		!boundRandom(NumFirms-1, Random);
 		.nth(Random, Firms, Firm);
 		.my_name(Me);
-		.send(Firm, askOne, demand(Me,Wage), Unused);
+		.send(Firm, askOne, jobRequest(Me,Wage), Unused);
 		.delete(Firm, Firms, ReducedFirms);
 		!sendDemand(ReducedFirms, Count-1);
 	}
@@ -80,37 +86,26 @@ maxSellers(5).
 		sentAllDemand;
 	}.
 
-// piano per generare un intero casuale limitato superiorimente da Bound	
-+!boundRandom(Bound, Result) <-
-	.random(R);
-	Result = math.round(Bound * R).
++!chooseEmployer([]) <-
+	+unemployed.
 
-+!chooseNewFirm(Firms) <-
-	.length(Firms, NumFirms);
-	// se ho almeno una richiesta di lavoro...
-	if (NumFirms>0) {
-		// lavoro per il primo che mi ha risposto
-		.nth(0, Firms, ChoosedFirm);
-		!startWork(ChoosedFirm);
-	} else {
-		// altrimenti sono disoccupato
-		+unemployed;
-	}.
++!chooseEmployer([Firm | Tail]) <-
+	!startWork(Firm).
 
 +?jobOffer(Firm) <-
 	+jobOffer(Firm).
 	
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
 // ciclo precedente ero disoccupato
-+jobOfferOver : not oldFirm(F) <-
++jobOfferOver : not oldEmployer(F) <-
 	.findall(Firm, jobOffer(Firm), Firms);
 	.abolish(jobOffer(_));
 	.findall(Firm, jobOffer(Firm), Firms2);
-	!chooseNewFirm(Firms).
+	!chooseEmployer(Firms).
 
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
 // ciclo precedente ero occupato
-+jobOfferOver : oldFirm(Old) <-
++jobOfferOver : oldEmployer(Old) <-
 	.findall(Firm, jobOffer(Firm), Firms);
 	.abolish(jobOffer(_));
 	if( .member(Old, Firms) ) {
@@ -120,7 +115,7 @@ maxSellers(5).
 	}
 	else {
 		// se non rinnova la richiesta, provo con gli altri datori
-		!chooseNewFirm(Firms);
+		!chooseEmployer(Firms);
 	}.
 
 +unemployed : requiredWage(W) & minWage(WageLowerBound) <- 
@@ -134,6 +129,7 @@ maxSellers(5).
 	-+money(M+Wage).
 	
 +startGoodsMarket : maxSellers(NSellers) <-
+	-+expenses(0);
 	.findall([Price, Firm], firmProduction(Firm, Price, Production), LProd);
 	!chooseSeller(LProd, NSellers, []).
 
@@ -159,7 +155,7 @@ maxSellers(5).
 	-+chosenSellers(ChosenSellers);
 	!buy.
 
-+!chooseSeller(LProd, NSellers, ChoosedSellers) : NSellers >0 <-
++!chooseSeller(LProd, NSellers, ChoosedSellers) <-
 	.length(LProd, NProd);
 	!boundRandom( NProd-1, Idx);
 	.nth(Idx, LProd, Seller);
@@ -171,16 +167,15 @@ maxSellers(5).
 +!startWork(Firm) : requiredWage(W) & maxWage(WageBound) <-
 	// informo l'azienda che accetto
 	.my_name(Me);
-	.send(Firm, askOne, accept(Me, W), UnusedRes);
+	.send(Firm, askOne, jobAccept(Me, W), UnusedRes);
 	!boundRandom(WageBound - W, UpdWage);
 	-+requiredWage(W + UpdWage); // alzo lo stipendio!!
-	-+oldFirm(Firm);
+	-+oldEmployer(Firm);
 	// informo l'environment che per questo ciclo sono occupato
 	employed.
 
-+!buy : money(0) | chosenSellers([]) <-
-	abolish(sold(_,_));
-	goodsMarketClosed.
++!buy : money(0) | chosenSellers([]) & expenses(I) <-
+	goodsMarketClosed(I).
 
 +!buy : money(Money) & chosenSellers([[Price, Seller] | Tail]) & firmList(Firms)  <-
 	-+chosenSellers(Tail);
@@ -190,7 +185,8 @@ maxSellers(5).
 		!buy;
 	}.
 
-+sold(Goods, Price)[source(S)] :  money(Money) <-
++sold(Goods, Price)[source(S)] :  money(Money) & expenses(I) <-
 	-sold(Goods, Price)[source(S)];
 	-+money(Money - Goods * Price);
+	-+expenses(I + Goods * Price);
 	!buy.
