@@ -22,7 +22,7 @@ price(50).
 +!start : maxProduction(MProd) & productionCoefficient(C) <-
 	// imposto un valore intero casuale limitato da 1 e maxWorkers per definire
 	// il numero di lavoratori di cui l'azienda ha bisogno
-	.print("parto");
+
 	!boundRandom(MProd, TargProd);
 	+targetProduction(TargProd);
 	Nwork = TargProd div C;
@@ -38,7 +38,6 @@ price(50).
 // credenza che indica una nuova fase del ciclo, in cui tutti i curriculum
 // sono stati inviati dai lavoratori
 +demandOver <-
-	.print("ok");
 	.findall([W, Worker], demand(Worker,W), NewDemandsList);
 	+demands(NewDemandsList);
 	.findall(Employed, accept(Employed, Wage), OldEmployedList);
@@ -55,7 +54,6 @@ price(50).
 		NewProdDemand = Production * (1 + R);
 		NewWorkersDemand = math.round(NewProdDemand / PD);
 		-+neededWorkers(NewWorkersDemand);
-		//.print(NewWorkersDemand);
 	} else {
 		if (G>0 & Price < NP) {
 			NewProdDemand = Production * (1 - R);

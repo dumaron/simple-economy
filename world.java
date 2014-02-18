@@ -75,6 +75,18 @@ public class world extends Environment {
 				removePerceptsByUnif(ag, Literal.parseLiteral(percept));
 		}
 	}
+	private boolean respawn() {
+		boolean result = false;
+		for (String respawn : respawnNext) {
+			logger.info("respawning "+respawn);
+			addPercept("creator", Literal.parseLiteral("respawnFirm("+respawn+")"));
+			addPerceptToList(workers, "respawned("+respawn+")");
+			removePerceptToList(workers, "dead("+respawn+")", false);
+			firms.add(respawn);
+			result = true;
+		}
+		return result;
+	}
 	@Override
 	public synchronized boolean executeAction(String ag, Structure act) {
 		// this is the most important method, where the
@@ -138,6 +150,7 @@ public class world extends Environment {
 				}
 				else if(!firstCycle && ++firmCount == toRespawn) {
 					toRespawn = 0;
+					firmCount = 0;
 					removePerceptsByUnif("creator", Literal.parseLiteral("respawnFirm(_)"));
 					addPerceptToList(workers, "beginCycle");
 				}
@@ -156,14 +169,7 @@ public class world extends Environment {
 			removePerceptToList(firms, "endCycle", false);
 			removePerceptToList(workers, "respawned(_)", true);
 			// risorgo i morti
-			for (String respawn : respawnNext) {
-				logger.info("respawning "+respawn);
-				addPercept("creator", Literal.parseLiteral("respawnFirm("+respawn+")"));
-				addPerceptToList(workers, "respawned("+respawn+")");
-				removePerceptToList(workers, "dead("+respawn+")", false);
-				respawned = true;
-				firms.add(respawn);
-			}
+			respawned = respawn();
 			// cancello la lista degli agenti da resuscitare
 			toRespawn = respawnNext.size();
 			respawnNext.clear();
@@ -175,6 +181,12 @@ public class world extends Environment {
 				firms.remove(dead);
 			}
 			deadFirms.clear();
+			if (firms.isEmpty()) {
+				logger.info("Nel ciclo di lavoro "+ cycle++ +" tutte le aziende sono chiuse, 0 occupati :( ");
+				respawned = respawn();
+				toRespawn = respawnNext.size();
+				respawnNext.clear();
+			}
 			// se non ho resuscitato nessuno...
 			if(!respawned){
 				addPerceptToList(workers, "beginCycle");

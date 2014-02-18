@@ -42,7 +42,6 @@ maxSellers(5).
 	!respawnFirm(LRespawn).
 
 +!respawnFirm([Firm | Tail]) <-
-	.print("respawining", Firm);
 	-introduction(Firm);
 	+firmVacancies(Firm, 1);
 	!respawnFirm(Tail).
