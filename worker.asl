@@ -38,15 +38,14 @@ maxSellers(5).
 +!respawn <-
 	.findall(Firm, respawned(Firm), LRespawn);
 	.abolish(respawned(_));
-	.findall(Firm, respawned(Firm), Tuam);
-	.print("tuamadre: ", Tuam);
 	.abolish(dead(_));
 	!respawnFirm(LRespawn).
 
 +!respawnFirm([Firm | Tail]) <-
 	.print("respawining", Firm);
 	-introduction(Firm);
-	+firmVacancies(Firm, 1).
+	+firmVacancies(Firm, 1);
+	!respawnFirm(Tail).
 	
 +!respawnFirm([]).
 

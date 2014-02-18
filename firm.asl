@@ -38,6 +38,7 @@ price(50).
 // credenza che indica una nuova fase del ciclo, in cui tutti i curriculum
 // sono stati inviati dai lavoratori
 +demandOver <-
+	.print("ok");
 	.findall([W, Worker], demand(Worker,W), NewDemandsList);
 	+demands(NewDemandsList);
 	.findall(Employed, accept(Employed, Wage), OldEmployedList);
@@ -59,7 +60,8 @@ price(50).
 		if (G>0 & Price < NP) {
 			NewProdDemand = Production * (1 - R);
 			NewWorkersDemand = math.round(NewProdDemand / PD);
-			-+neededWorkers(NewWorkersDemand);
+			.max([NewWorkersDemand, 1], NW);
+			-+neededWorkers(NW);
 		}
 	}
 .

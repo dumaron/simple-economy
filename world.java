@@ -14,7 +14,7 @@ import jason.runtime.Settings;
 public class world extends Environment {
 	// any class members needed...
 	
-	Integer nfirm, nworkers, employed, unemployed, cycle=1, firmCount, workerCount, currAggrPrice=0, oldAggrPrice, bankrupt, business;
+	Integer nfirm, nworkers, employed, unemployed, cycle=1, firmCount, workerCount, currAggrPrice=0, oldAggrPrice, bankrupt, business, toRespawn;
 	List<String> firms;
 	List<String> workers;
 	List<String> deadFirms;
@@ -53,6 +53,7 @@ public class world extends Environment {
 		unemployed = new Integer(0);
 		bankrupt = new Integer(0);
 		business = new Integer(0);
+		toRespawn = new Integer(0);
 	}
 	@Override
 	public void stop() {
@@ -130,14 +131,15 @@ public class world extends Environment {
 				}
 				break;
 			case "introduced":
-				logger.info("introducing "+ag+" "+firmCount); 
 				if (firstCycle && ++firmCount == firms.size()) {
 					firmCount = 0;
 					firstCycle=false;
 					addPerceptToList(workers, "firstCycle");
 				}
-				else if(!firstCycle && ++firmCount == firms.size()) {
-					respawnNext.clear();
+				else if(!firstCycle && ++firmCount == toRespawn) {
+					toRespawn = 0;
+					removePerceptsByUnif("creator", Literal.parseLiteral("respawnFirm(_)"));
+					addPerceptToList(workers, "beginCycle");
 				}
 				break;
 			case "kill_me": 
@@ -148,29 +150,35 @@ public class world extends Environment {
 		}
 		
 		if (bankrupt + business == firms.size()) {
-			bankrupt = business = 0;
+			bankrupt = 0;
+			business = 0;
+			boolean respawned = false;
 			removePerceptToList(firms, "endCycle", false);
 			removePerceptToList(workers, "respawned(_)", true);
+			// risorgo i morti
 			for (String respawn : respawnNext) {
-				Settings settings = new Settings();
-				List<String> archClass = new ArrayList<String>();
 				logger.info("respawning "+respawn);
 				addPercept("creator", Literal.parseLiteral("respawnFirm("+respawn+")"));
 				addPerceptToList(workers, "respawned("+respawn+")");
 				removePerceptToList(workers, "dead("+respawn+")", false);
+				respawned = true;
+				firms.add(respawn);
 			}
+			// cancello la lista degli agenti da resuscitare
+			toRespawn = respawnNext.size();
+			respawnNext.clear();
+			// metto i morti nella lista degli agenti da resuscitare
+			// e li tolgo dalla lista dei vivi
 			for (String dead:deadFirms) {
 				addPerceptToList(workers, "dead("+dead+")");
+				respawnNext.add(dead);
 				firms.remove(dead);
 			}
-			if(respawnNext.isEmpty()){
-				logger.info("respawn empty");
-				respawnNext= new ArrayList<String>(deadFirms);
-				deadFirms.clear();
+			deadFirms.clear();
+			// se non ho resuscitato nessuno...
+			if(!respawned){
 				addPerceptToList(workers, "beginCycle");
 			}
-			respawnNext=new ArrayList<String>(deadFirms);
-			deadFirms.clear();
 		}
 		
 		if (employed + unemployed == workers.size()) {
