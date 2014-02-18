@@ -3,7 +3,6 @@ maxWage(1000). // stipendio massimo (ahahaha)
 minWage(1). // stipendio minimo
 money(1000).
 maxSellers(5).
-expenses(0).
 
 // piano per generare un intero casuale limitato superiorimente da Bound	
 +!boundRandom(Bound, Result) <-
@@ -17,6 +16,7 @@ expenses(0).
 	.findall(Name, introduction(Name), Firms);
 	.abolish(introduction(_));
 	+firmList(Firms);
+	+expenses(0);
 	!boundRandom(W, Wage);
 	+requiredWage(Wage);
 	!sendAllDemands.
@@ -174,8 +174,9 @@ expenses(0).
 	// informo l'environment che per questo ciclo sono occupato
 	employed.
 
-+!buy : money(0) | chosenSellers([]) & expenses(I) <-
-	goodsMarketClosed(I).
++!buy : (money(0) | chosenSellers([])) & expenses(E) <-
+	goodsMarketClosed(E).
+
 
 +!buy : money(Money) & chosenSellers([[Price, Seller] | Tail]) & firmList(Firms)  <-
 	-+chosenSellers(Tail);
@@ -185,8 +186,8 @@ expenses(0).
 		!buy;
 	}.
 
-+sold(Goods, Price)[source(S)] :  money(Money) & expenses(I) <-
++sold(Goods, Price)[source(S)] :  money(Money) & expenses(E) <-
 	-sold(Goods, Price)[source(S)];
-	-+money(Money - Goods * Price);
-	-+expenses(I + Goods * Price);
+	-+money(Money - (Goods * Price));
+	-+expenses(E + (Goods * Price));
 	!buy.

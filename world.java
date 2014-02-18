@@ -98,7 +98,6 @@ public class world extends Environment {
 		
 		switch (act.getFunctor()) {
 			case "sentAllDemand": 
-
 				if(++workerCount == workers.size()) {
 					workerCount = 0;
 					removePerceptToList(workers, "beginCycle", false);
