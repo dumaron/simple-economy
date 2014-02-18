@@ -24,8 +24,9 @@ price(50).
 	// il numero di lavoratori di cui l'azienda ha bisogno
 
 	!boundRandom(MProd, TargProd);
-	+targetProduction(TargProd);
-	Nwork = TargProd div C;
+	.max([TargProd, C], TP);
+	+targetProduction(TP);
+	Nwork = TP div C;
 	+neededWorkers(Nwork);
 	// mi presento a tutti gli altri agenti
 	.my_name(Me);
