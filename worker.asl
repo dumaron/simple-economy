@@ -1,8 +1,8 @@
-maxDemand(5). // massimo numero di curriculum inviabili
+maxDemand(3). // massimo numero di curriculum inviabili
 maxWage(1000). // stipendio massimo (ahahaha)
 minWage(1). // stipendio minimo
 money(1000).
-maxSellers(5).
+maxSellers(3).
 
 // piano per generare un intero casuale limitato superiorimente da Bound	
 +!boundRandom(Bound, Result) <-
@@ -130,7 +130,7 @@ maxSellers(5).
 	
 +startGoodsMarket : maxSellers(NSellers) <-
 	-+expenses(0);
-	.findall([Price, Firm], firmProduction(Firm, Price, Production), LProd);
+	.findall([Price, Firm, StartP, EndP], firmProduction(Firm, Price, StartP, EndP), LProd);
 	!chooseSeller(LProd, NSellers, []).
 
 +!chooseSeller(LProd, NSellers, ChosenSellers) : bestPrice([P,F]) & (LProd==[] | NSellers==0) <-
@@ -155,15 +155,16 @@ maxSellers(5).
 	-+chosenSellers(ChosenSellers);
 	!buy.
 
-+!chooseSeller(LProd, NSellers, ChoosedSellers) <-
-	.length(LProd, NProd);
-	!boundRandom( NProd-1, Idx);
-	.nth(Idx, LProd, Seller);
-	//ask seller
-	.delete(Seller, LProd, UpdLProd);
-	.concat(ChoosedSellers, [Seller], NewSellers);
-	!chooseSeller(UpdLProd, NSellers - 1, NewSellers).
-
++!chooseSeller(LProd, NSellers, ChosenSellers) : totalProd(TP) <-
+	!boundRandom(TP, Idx);
+	.findall([Price, Firm], firmProduction(Firm, Price, StartP, EndP) & Idx >= StartP & Idx < EndP, Seller);
+	if (.member(Seller, ChosenSellers)) {
+		!chooseSeller(LProd, NSellers, ChosenSellers);
+	} else {
+		.concat(ChosenSellers, Seller, NewSellers);
+		!chooseSeller(UpdLProd, NSellers - 1, NewSellers);
+	}.			
+	
 +!startWork(Firm) : requiredWage(W) & maxWage(WageBound) <-
 	// informo l'azienda che accetto
 	.my_name(Me);

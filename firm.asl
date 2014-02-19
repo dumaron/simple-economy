@@ -1,5 +1,5 @@
 maxProduction(27).
-productionCoefficient(3).
+productionCoefficient(1).
 goods(0).
 capital(10000).
 price(50).

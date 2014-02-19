@@ -15,7 +15,7 @@ public class world extends Environment {
 	// any class members needed...
 	
 	Integer nfirm, nworkers, employed, unemployed, cycle=1, firmCount, 
-	workerCount, currAggrPrice=0, oldAggrPrice, bankrupt, business, toRespawn, totalProduction, totalIncome;
+	workerCount, currAggrPrice=0, oldAggrPrice, bankrupt, business, toRespawn, totalProduction, totalIncome, totalProbab;
 	List<String> firms;
 	List<String> workers;
 	List<String> deadFirms;
@@ -57,6 +57,7 @@ public class world extends Environment {
 		toRespawn = new Integer(0);
 		totalProduction = new Integer(0);
 		totalIncome = new Integer(0);
+		totalProbab = 0;
 	}
 	@Override
 	public void stop() {
@@ -130,27 +131,31 @@ public class world extends Environment {
 				production=Integer.parseInt(act.getTerm(1).toString());
 				price = Integer.parseInt(act.getTerm(2).toString());
 				currAggrPrice+=price;
-				totalProduction+=production;
-				for(i=0; i<=probab; i++) {
-					addPerceptToList(workers, "firmVacancies("+ag+","+i+")");
-				}
-				for(i=0; i<=production; i++) {
-					addPerceptToList(workers, "firmProduction("+ag+","+price+","+i+")");
-				}
+				
+				//addPerceptToList(workers, "firmVacancies("+ag+","+totalProbab+","+(totalProbab + probab)+")");
+				addPerceptToList(workers, "firmVacancies("+ag+",0)");
+				addPerceptToList(workers, "firmProduction("+ag+","+price+","+totalProduction+","+ (totalProduction+production) +")");
+				totalProbab += probab;
+				totalProduction += production;
+				
 				if (++firmCount == firms.size()) {
 					currAggrPrice=currAggrPrice/firms.size();
 					logger.info("Prezzo aggregato: "+currAggrPrice);
 					logger.info("Produzione totale: "+totalProduction);
 					removePerceptToList(firms, "oldAggregatePrice(_)", true);
 					removePerceptToList(firms, "newAggregatePrice(_)", true);
+					removePerceptToList(workers, "totalProd(_)", true);
 					removePerceptToList(firms, "jobMarketClosed", false);
 					firmCount = 0;
+					addPerceptToList(workers, "totalProd("+ totalProduction +")");
 					addPerceptToList(firms, "oldAggregatePrice("+oldAggrPrice+")");
 					addPerceptToList(firms, "newAggregatePrice("+currAggrPrice+")");
 					addPerceptToList(workers, "startGoodsMarket");
 					oldAggrPrice=currAggrPrice;
 					currAggrPrice=0;
 					totalProduction=0;
+					totalProbab = 0;
+					logger.info("Ma porca...");
 				}
 				break;
 			case "introduced":
