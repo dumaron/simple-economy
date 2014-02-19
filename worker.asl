@@ -127,13 +127,34 @@ maxSellers(3).
 
 +?pay(Wage) : money(M) <-
 	-+money(M+Wage).
-	
+
++firmPercProduction(Firm, Price, SP, NP) <-
+	+firmProduction(Firm,Price,SP,NP).
+
++totalPercProd(TP) <-
+	-+totalProd(TP).
+
 +startGoodsMarket : maxSellers(NSellers) <-
 	-+expenses(0);
-	.findall([Price, Firm, StartP, EndP], firmProduction(Firm, Price, StartP, EndP), LProd);
-	!chooseSeller(LProd, NSellers, []).
+	!chooseSeller(NSellers, []).
 
-+!chooseSeller(LProd, NSellers, ChosenSellers) : bestPrice([P,F]) & (LProd==[] | NSellers==0) <-
++!chooseSeller(NSellers, ChosenSellers) :  not firmProduction(F,P,S,E) & bestPrice([P,F])   <-
+	.sort(ChosenSellers, SortedSellers);
+	if(.member([_,F], SortedSellers)) {
+		.delete([_,F], SortedSellers, RemovedL);
+	}
+	else {
+		.length(SortedSellers, L);
+		.delete(L, SortedSellers, RemovedL);
+	}
+	.concat([[P,F]] ,RemovedL, FinalSellers);
+	.nth(0, SortedSellers, LowestPrice);
+	-+bestPrice(LowestPrice);
+	-+chosenSellers(FinalSellers);
+	!buy.
+	
+
++!chooseSeller(0, ChosenSellers) :  bestPrice([P,F])  <-
 	.sort(ChosenSellers, SortedSellers);
 	if(.member([_,F], SortedSellers)) {
 		.delete([_,F], SortedSellers, RemovedL);
@@ -148,22 +169,86 @@ maxSellers(3).
 	-+chosenSellers(FinalSellers);
 	!buy.
 
-+!chooseSeller(LProd, NSellers, ChosenSellers) : LProd==[] | NSellers==0 <-
++!chooseSeller(NSellers, ChosenSellers) : not firmProduction(F,P,S,E) | NSellers==0 <-
+	.findall(Firm, firmProduction(F,P,S,E), L);
 	.sort(ChosenSellers, SortedSellers);
 	.nth(0, SortedSellers, LowestPrice);
 	-+bestPrice(LowestPrice);
 	-+chosenSellers(ChosenSellers);
 	!buy.
 
-+!chooseSeller(LProd, NSellers, ChosenSellers) : totalProd(TP) <-
++!chooseSeller(NSellers, ChosenSellers) : totalProd(TP) <-
 	!boundRandom(TP, Idx);
-	.findall([Price, Firm], firmProduction(Firm, Price, StartP, EndP) & Idx >= StartP & Idx < EndP, Seller);
-	if (.member(Seller, ChosenSellers)) {
-		!chooseSeller(LProd, NSellers, ChosenSellers);
-	} else {
-		.concat(ChosenSellers, Seller, NewSellers);
-		!chooseSeller(UpdLProd, NSellers - 1, NewSellers);
-	}.			
+	.print("random, ",Idx);
+	.findall([Firm, Price, StartP, EndP], firmProduction(Firm, Price, StartP, EndP), Prova);
+	!selectFirm(Prova, Idx, NSellers, ChosenSellers).
+	/*if(Idx==0) {
+		.findall([Price, Firm, StartP, EndP], (firmProduction(Firm, Price, StartP, EndP) & Idx >= StartP & Idx <= EndP), Seller);
+	}else {
+		.findall([Price, Firm, StartP, EndP], (firmProduction(Firm, Price, StartP, EndP) & Idx > StartP & Idx <= EndP), Seller);
+	}
+	.print("Seller", Seller);
+	.nth(0, Seller, USeller); 
+	.nth(0, USeller, UPrice);
+	.nth(1, USeller, UFirm);
+	.nth(2, USeller, UStartP);
+	.nth(3, USeller, UEndP);
+	//.print("******", UEndP);
+	.abolish(firmProduction(UFirm,_,_,_));
+	Delta = (UEndP - UStartP);
+	//.print("Delta", Delta);
+	//.print("UStartP", UStartP);
+	//.print("!!!", Delta);
+	-+totalProd(TP-Delta);
+	!updateSellerList(Delta, UEndP);
+	//.print(Seller);
+	.concat(ChosenSellers, [[UPrice, UFirm]] , NewSellers);
+	//.print("new sellers: ", NewSellers);
+	!chooseSeller(NSellers - 1, NewSellers).*/			
+
++!selectFirm([[Firm, Price, StartP, EndP] | Tail], Idx, NSellers, ChosenSellers) : totalProd(TP) <-
+	if((Idx>StartP & Idx <=EndP) | (Idx==0 & Idx==StartP)) {
+		//.print("OKIDOKI");
+		.abolish(firmProduction(Firm,_,_,_));
+		Delta = (EndP - StartP);
+		//.print("Delta", Delta);
+		//.print("UStartP", UStartP);
+		//.print("!!!", Delta);
+		-+totalProd(TP-Delta);
+		!updateSellerList(Delta, EndP);
+		//.print(Firm, " ", StartP, " ", EndP, " ", Idx);
+		.concat(ChosenSellers, [[Price, Firm]] , NewSellers);
+		//.print("new sellers: ", NewSellers);
+		!chooseSeller(NSellers - 1, NewSellers);
+	}
+	else{
+		!selectFirm(Tail, Idx, NSellers, ChosenSellers)
+	}.
+
+
++!selectFirm([], Idx, NSellers, NewSellers) <-
+	.print("_-------------------------------------");
+	!chooseSeller(NSellers, NewSellers).
+
++!updateSellerList(Delta, EndP) <-
+	.findall([Firm, Price, NStartP, NEndP], firmProduction(Firm, Price, NStartP, NEndP) /*& EndP <= NStartP*/, UpdSellers);
+	//-+updatedS(UpdSellers);
+	!updateSeller(Delta, UpdSellers, EndP).
+	/*for(.member([UFirm, UPrice, UStartP, UEndP], UpdSellers)) {
+		.abolish(firmProduction(UFirm,_,_,_));
+		+firmProduction(UFirm, UPrice, UStartP - Delta, UEndP - Delta);
+	}.*/
+	
++!updateSeller(Delta, [ [Firm, Price, StartP, EndP] | Tail], OEndP) <-
+	if(OEndp<=StartP){
+		.abolish(firmProduction(Firm,_,_,_));
+		+firmProduction(Firm, Price, StartP - Delta, EndP - Delta);
+	}
+	!updateSeller(Delta, Tail,OEndP).
+
++!updateSeller(Delta, [], OEndP).
+
+
 	
 +!startWork(Firm) : requiredWage(W) & maxWage(WageBound) <-
 	// informo l'azienda che accetto

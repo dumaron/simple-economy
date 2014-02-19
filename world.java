@@ -117,7 +117,8 @@ public class world extends Environment {
 				if (++workerCount == workers.size()) {
 					workerCount = 0;
 					removePerceptToList(workers, "startGoodsMarket", false);
-					removePerceptToList(workers, "firmProduction(_,_,_)", true);
+					removePerceptToList(workers, "totalPercProd(_)", true);
+					removePerceptToList(workers, "firmPercProduction(_,_,_,_)", true);
 					addPerceptToList(firms, "endCycle");
 					logger.info("PIL: "+totalIncome);
 					totalIncome=0;
@@ -128,13 +129,13 @@ public class world extends Environment {
 			case "jobMarketClosed": 
 				Integer probab, i, production, price;
 				probab=Integer.parseInt(act.getTerm(0).toString());
-				production=Integer.parseInt(act.getTerm(1).toString());
+				production=Integer.parseInt(act.getTerm(1).toString())+1;
 				price = Integer.parseInt(act.getTerm(2).toString());
 				currAggrPrice+=price;
 				
 				//addPerceptToList(workers, "firmVacancies("+ag+","+totalProbab+","+(totalProbab + probab)+")");
 				addPerceptToList(workers, "firmVacancies("+ag+",0)");
-				addPerceptToList(workers, "firmProduction("+ag+","+price+","+totalProduction+","+ (totalProduction+production) +")");
+				addPerceptToList(workers, "firmPercProduction("+ag+","+price+","+(totalProduction)+","+ (totalProduction+production) +")");
 				totalProbab += probab;
 				totalProduction += production;
 				
@@ -144,10 +145,9 @@ public class world extends Environment {
 					logger.info("Produzione totale: "+totalProduction);
 					removePerceptToList(firms, "oldAggregatePrice(_)", true);
 					removePerceptToList(firms, "newAggregatePrice(_)", true);
-					removePerceptToList(workers, "totalProd(_)", true);
 					removePerceptToList(firms, "jobMarketClosed", false);
 					firmCount = 0;
-					addPerceptToList(workers, "totalProd("+ totalProduction +")");
+					addPerceptToList(workers, "totalPercProd("+ totalProduction +")");
 					addPerceptToList(firms, "oldAggregatePrice("+oldAggrPrice+")");
 					addPerceptToList(firms, "newAggregatePrice("+currAggrPrice+")");
 					addPerceptToList(workers, "startGoodsMarket");
@@ -155,7 +155,7 @@ public class world extends Environment {
 					currAggrPrice=0;
 					totalProduction=0;
 					totalProbab = 0;
-					logger.info("Ma porca...");
+					logger.info("Fine jmclosed");
 				}
 				break;
 			case "introduced":
