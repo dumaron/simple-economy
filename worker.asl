@@ -34,16 +34,22 @@ maxSellers(3).
 	!respawn;
 	.findall(Firm, firmVacancies(Firm, SV, EV), FirmVac);
 	-+firmList(FirmVac);
-	.abolish(firmProduction(_,_,_,_));
-	//.print(FirmVac);
 	!sendAllDemands.
 	
 +!buryDeads <-
 	.findall(Firm, dead(Firm), Deads);
 	!bury(Deads).
 
-+!bury([Dead | Tail]) <-
++!bury([Dead | Tail]) : totalVac(TV) <-
+	.findall([Dead, SV, EV], firmVacancies(Dead, SV, EV), DeadFirms);
+	.nth(0, DeadFirms, DFirm);
+	.nth(1, DFirm, DStart);
+	.nth(2, DFirm, DEnd);
+	Delta= DEnd-DStart;
 	.abolish(firmVacancies(Dead,_,_));
+	//.print("updating ", OldStart, ", ", OldEnd, ", ", Delta);
+	!updateFirmVacList(Delta, DEnd);
+	-+totalVac(TV-Delta);
 	!bury(Tail).
 
 +!bury([]).
@@ -54,15 +60,16 @@ maxSellers(3).
 	.abolish(dead(_));
 	!respawnFirm(LRespawn).
 
-+!respawnFirm([Firm | Tail]) : totalProb(P) <-
++!respawnFirm([Firm | Tail]) : totalVac(P) <-
 	-introduction(Firm);
-	-+totalProb(P+1);
+	-+totalVac(P+1);
 	+firmVacancies(Firm, P, P+1);
 	!respawnFirm(Tail).
 	
 +!respawnFirm([]).
 
 +!sendAllDemands : firmList(L) & maxDemand(M) & oldEmployer(Old) & .member(Old, L) <-
+	-oldEmployer(Old);
 	!sendDemand(M, Old).
 
 +!sendAllDemands : firmList(L) & maxDemand(M) <-
@@ -87,9 +94,10 @@ maxSellers(3).
 // sempre entro i limiti di maxDemand
 +!sendDemand(NumFirms) : totalVac(TV) <-
 	//.print("sendDemand!!");
+	.findall([Firm, SV, EV], firmVacancies(Firm, SV, EV), FirmVac);
+	.length(FirmVac, Length);
 	//.print("Total vac", TV);
-	if (NumFirms>0 & TV>0) {
-		.findall([Firm, SV, EV], firmVacancies(Firm, SV, EV), FirmVac);
+	if (NumFirms>0 & Length > 0 ) {
 		//.print("firm vac, ", FirmVac);
 		//.print("send demands to ", FirmVac, "NumFirms ", NumFirms);
 		// seleziono un'azienda a caso fra quelle che conosco
@@ -101,6 +109,7 @@ maxSellers(3).
 		// per questo agente la fase del ciclo in cui si inviano curriculum
 		// è terminata
 		//.print("Sending!");
+		.abolish(firmVacancies(_,_,_));
 		sentAllDemands;
 	}.
 	
@@ -147,7 +156,6 @@ maxSellers(3).
 +jobOfferOver : not oldEmployer(F) <-
 	.findall(Firm, jobOffer(Firm), Firms);
 	.abolish(jobOffer(_));
-	.findall(Firm, jobOffer(Firm), Firms2);
 	!chooseEmployer(Firms).
 
 // credenza attivata quando le aziende hanno inviato le loro richieste e nel
@@ -189,7 +197,7 @@ maxSellers(3).
 	-+expenses(0);
 	!chooseSeller(NSellers, []).
 
-/*+!chooseSeller(NSellers, ChosenSellers) :  not firmProduction(F,P,S,E) & bestPrice([P,F])   <-
++!chooseSeller(NSellers, ChosenSellers) :  not firmProduction(F,P,S,E) & bestPrice([P,F])   <-
 	.sort(ChosenSellers, SortedSellers);
 	if(.member([_,F], SortedSellers)) {
 		.delete([_,F], SortedSellers, RemovedL);
@@ -203,10 +211,10 @@ maxSellers(3).
 	.abolish(firmProduction(_,_,_,_));
 	-+bestPrice(LowestPrice);
 	-+chosenSellers(FinalSellers);
-	!buy.*/
+	!buy.
 	
 
-/*+!chooseSeller(0, ChosenSellers) :  bestPrice([P,F]) <-
++!chooseSeller(0, ChosenSellers) :  bestPrice([P,F]) <-
 	.sort(ChosenSellers, SortedSellers);
 	if(.member([_,F], SortedSellers)) {
 		.delete([_,F], SortedSellers, RemovedL);
@@ -220,7 +228,7 @@ maxSellers(3).
 	.abolish(firmProduction(_,_,_,_));
 	-+bestPrice(LowestPrice);
 	-+chosenSellers(FinalSellers);
-	!buy.*/
+	!buy.
 
 +!chooseSeller(NSellers, ChosenSellers) : not firmProduction(Fi,Pr,Se,En) | NSellers==0 <-
 	.sort(ChosenSellers, SortedSellers);

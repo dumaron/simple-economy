@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Logger;
+import java.util.Date;
 import java.io.FileInputStream;
 import jason.mas2j.*;
 import jason.runtime.Settings;
@@ -21,6 +22,7 @@ public class world extends Environment {
 	List<String> deadFirms;
 	List<String> respawnNext;
 	Boolean firstCycle=true;
+	long time;
 	
     static Logger logger = Logger.getLogger(world.class.getName());
 
@@ -108,6 +110,7 @@ public class world extends Environment {
 				break;
 			case "sentAllJobOffer": 
 				if (++firmCount == firms.size()) {
+					logger.info("sent all job offers");
 					firmCount = 0;
 					addPerceptToList(workers, "jobOfferOver");
 				}
@@ -162,6 +165,7 @@ public class world extends Environment {
 				break;
 			case "introduced":
 				if (firstCycle && ++firmCount == firms.size()) {
+					logger.info("introduced");
 					firmCount = 0;
 					firstCycle=false;
 					int tv=0;
@@ -182,7 +186,7 @@ public class world extends Environment {
 				bankrupt++;
 				deadFirms.add(ag);
 				break;
-			case "in_business": business++; break;
+			case "in_business": business++; break;	
 		}
 		
 		if (bankrupt + business == firms.size()) {
