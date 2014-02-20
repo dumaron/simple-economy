@@ -115,7 +115,6 @@ public class world extends Environment {
 			case "goodsMarketClosed":
 				Integer income = Integer.parseInt(act.getTerm(0).toString());
 				totalIncome+=income;
-				logger.info("income is: "+ income);
 				if (++workerCount == workers.size()) {
 					workerCount = 0;
 					removePerceptToList(workers, "startGoodsMarket", false);
@@ -135,8 +134,6 @@ public class world extends Environment {
 				price = Integer.parseInt(act.getTerm(2).toString());
 				currAggrPrice+=price;
 				
-				logger.info("firmPercVacancies("+ag+","+totalProbab+","+(totalProbab + probab)+")");
-				logger.info("firmPercProduction("+ag+","+price+","+(totalProduction)+","+ (totalProduction+production) +")");
 				addPerceptToList(workers, "firmPercVacancies("+ag+","+totalProbab+","+(totalProbab + probab)+")");
 				addPerceptToList(workers, "firmPercProduction("+ag+","+price+","+(totalProduction)+","+ (totalProduction+production) +")");
 				totalProbab += probab;
