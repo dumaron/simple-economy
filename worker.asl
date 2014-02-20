@@ -149,6 +149,7 @@ maxSellers(3).
 	}
 	.concat([[P,F]] ,RemovedL, FinalSellers);
 	.nth(0, SortedSellers, LowestPrice);
+	.abolish(firmProduction(_,_,_,_));
 	-+bestPrice(LowestPrice);
 	-+chosenSellers(FinalSellers);
 	!buy.
@@ -165,6 +166,7 @@ maxSellers(3).
 	}
 	.concat([[P,F]] ,RemovedL, FinalSellers);
 	.nth(0, SortedSellers, LowestPrice);
+	.abolish(firmProduction(_,_,_,_));
 	-+bestPrice(LowestPrice);
 	-+chosenSellers(FinalSellers);
 	!buy.
@@ -173,52 +175,23 @@ maxSellers(3).
 	.findall(Firm, firmProduction(F,P,S,E), L);
 	.sort(ChosenSellers, SortedSellers);
 	.nth(0, SortedSellers, LowestPrice);
+	.abolish(firmProduction(_,_,_,_));
 	-+bestPrice(LowestPrice);
 	-+chosenSellers(ChosenSellers);
 	!buy.
 
-+!chooseSeller(NSellers, ChosenSellers) : totalProd(TP) <-
++!chooseSeller(NSellers, ChosenSellers) : totalProd(TP) & TP>0 <-
 	!boundRandom(TP, Idx);
-	.print("random, ",Idx);
 	.findall([Firm, Price, StartP, EndP], firmProduction(Firm, Price, StartP, EndP), Prova);
-	!selectFirm(Prova, Idx, NSellers, ChosenSellers).
-	/*if(Idx==0) {
-		.findall([Price, Firm, StartP, EndP], (firmProduction(Firm, Price, StartP, EndP) & Idx >= StartP & Idx <= EndP), Seller);
-	}else {
-		.findall([Price, Firm, StartP, EndP], (firmProduction(Firm, Price, StartP, EndP) & Idx > StartP & Idx <= EndP), Seller);
-	}
-	.print("Seller", Seller);
-	.nth(0, Seller, USeller); 
-	.nth(0, USeller, UPrice);
-	.nth(1, USeller, UFirm);
-	.nth(2, USeller, UStartP);
-	.nth(3, USeller, UEndP);
-	//.print("******", UEndP);
-	.abolish(firmProduction(UFirm,_,_,_));
-	Delta = (UEndP - UStartP);
-	//.print("Delta", Delta);
-	//.print("UStartP", UStartP);
-	//.print("!!!", Delta);
-	-+totalProd(TP-Delta);
-	!updateSellerList(Delta, UEndP);
-	//.print(Seller);
-	.concat(ChosenSellers, [[UPrice, UFirm]] , NewSellers);
-	//.print("new sellers: ", NewSellers);
-	!chooseSeller(NSellers - 1, NewSellers).*/			
+	!selectFirm(Prova, Idx, NSellers, ChosenSellers).	
 
 +!selectFirm([[Firm, Price, StartP, EndP] | Tail], Idx, NSellers, ChosenSellers) : totalProd(TP) <-
 	if((Idx>StartP & Idx <=EndP) | (Idx==0 & Idx==StartP)) {
-		//.print("OKIDOKI");
 		.abolish(firmProduction(Firm,_,_,_));
 		Delta = (EndP - StartP);
-		//.print("Delta", Delta);
-		//.print("UStartP", UStartP);
-		//.print("!!!", Delta);
-		-+totalProd(TP-Delta);
+		-+totalProd(TP - Delta);
 		!updateSellerList(Delta, EndP);
-		//.print(Firm, " ", StartP, " ", EndP, " ", Idx);
 		.concat(ChosenSellers, [[Price, Firm]] , NewSellers);
-		//.print("new sellers: ", NewSellers);
 		!chooseSeller(NSellers - 1, NewSellers);
 	}
 	else{
@@ -226,21 +199,13 @@ maxSellers(3).
 	}.
 
 
-+!selectFirm([], Idx, NSellers, NewSellers) <-
-	.print("_-------------------------------------");
-	!chooseSeller(NSellers, NewSellers).
-
 +!updateSellerList(Delta, EndP) <-
-	.findall([Firm, Price, NStartP, NEndP], firmProduction(Firm, Price, NStartP, NEndP) /*& EndP <= NStartP*/, UpdSellers);
+	.findall([Firm, Price, NStartP, NEndP], firmProduction(Firm, Price, NStartP, NEndP), UpdSellers);
 	//-+updatedS(UpdSellers);
 	!updateSeller(Delta, UpdSellers, EndP).
-	/*for(.member([UFirm, UPrice, UStartP, UEndP], UpdSellers)) {
-		.abolish(firmProduction(UFirm,_,_,_));
-		+firmProduction(UFirm, UPrice, UStartP - Delta, UEndP - Delta);
-	}.*/
 	
 +!updateSeller(Delta, [ [Firm, Price, StartP, EndP] | Tail], OEndP) <-
-	if(OEndp<=StartP){
+	if(OEndP<=StartP){
 		.abolish(firmProduction(Firm,_,_,_));
 		+firmProduction(Firm, Price, StartP - Delta, EndP - Delta);
 	}
