@@ -4,6 +4,12 @@ minWage(1). // stipendio minimo
 money(1000).
 maxSellers(3).
 
++firmPercVacancies(Firm, SV, EV) <-
+	+firmVacancies(Firm, SV, EV).
+	
++totalPercVac(TV) <-
+	-+totalVac(TV).
+
 // piano per generare un intero casuale limitato superiorimente da Bound	
 +!boundRandom(Bound, Result) <-
 	.random(R);
@@ -26,17 +32,17 @@ maxSellers(3).
 	-unemployed; // almeno c'è la buona volontà
 	!buryDeads;
 	!respawn;
-	.findall(Firm, firmVacancies(Firm, N), FirmVac);
+	.abolish(firmProduction(_,_,_,_));
+	.findall([Firm, SV, EV], firmVacancies(Firm, SV, EV), FirmVac);
 	-+firmList(FirmVac);
 	!sendAllDemands.
 	
 +!buryDeads <-
 	.findall(Firm, dead(Firm), Deads);
-	.findall(Firm, firmVacancies(Firm, N), FirmVac);
 	!bury(Deads).
 
 +!bury([Dead | Tail]) <-
-	.abolish(firmVacancies(Dead,_));
+	.abolish(firmVacancies(Dead,_,_));
 	!bury(Tail).
 
 +!bury([]).
@@ -47,44 +53,77 @@ maxSellers(3).
 	.abolish(dead(_));
 	!respawnFirm(LRespawn).
 
-+!respawnFirm([Firm | Tail]) <-
++!respawnFirm([Firm | Tail]) : totalProb(P) <-
 	-introduction(Firm);
-	+firmVacancies(Firm, 1);
+	-+totalProb(P+1);
+	+firmVacancies(Firm, P, P+1);
 	!respawnFirm(Tail).
 	
 +!respawnFirm([]).
 
 +!sendAllDemands : firmList(L) & maxDemand(M) & oldEmployer(Old) & .member(Old, L) <-
-	!sendDemand(L, M, Old).
+	!sendDemand(M, Old).
 
 +!sendAllDemands : firmList(L) & maxDemand(M) <-
-	!sendDemand(L, M).
+	!sendDemand(M).
 	
 // Piano per inviare una richiesta al vecchio datore di lavoro
-+!sendDemand(L, M, Old) : requiredWage(Wage) <-
-	.delete(Old, L, ReducedL);
++!sendDemand(NumFirms, Old) : requiredWage(Wage) <-
+	.abolish(firmVacancies(Old,_,_));
 	.my_name(Me);
 	.send(Old, askOne, jobRequest(Me, Wage), Unused);
-	!sendDemand(ReducedL, M-1).
+	!sendDemand(M-1).
 
 // Piano per inviare una richiesta di lavoro agli imprenditori che conosco, 
 // sempre entro i limiti di maxDemand
-+!sendDemand(Firms, Count) : requiredWage(Wage) <-
-	.length(Firms, NumFirms);
-	if (Count>0 & NumFirms>0) { 
++!sendDemand(NumFirms) : totalVac(TV) <-
+	//.print("Total vac", TV);
+	if (NumFirms>0 & TV>0) {
+		.findall([Firm, SV, EV], firmVacancies(Firm, SV, EV), FirmVac);
+		//.print("send demands to ", FirmVac, "NumFirms ", NumFirms);
 		// seleziono un'azienda a caso fra quelle che conosco
-		!boundRandom(NumFirms-1, Random);
-		.nth(Random, Firms, Firm);
-		.my_name(Me);
+		!boundRandom(TV, Random);
+		//.print("random is ", Random);
+		!selectDemandFirm(FirmVac,  Random, NumFirms);
+		/*.my_name(Me);
 		.send(Firm, askOne, jobRequest(Me,Wage), Unused);
 		.delete(Firm, Firms, ReducedFirms);
-		!sendDemand(ReducedFirms, Count-1);
+		!sendDemand(ReducedFirms, Count-1);*/
 	}
 	else {
 		// per questo agente la fase del ciclo in cui si inviano curriculum
 		// è terminata
-		sentAllDemand;
+		sentAllDemands;
 	}.
+	
++!selectDemandFirm([[Firm, SV, EV] | Tail], Idx, NumFirms) : totalVac(TV) & requiredWage(Wage) <-
+	if(Idx>SV & Idx <=EV | (Idx==0 & Idx==SV)) {
+		.abolish(firmVacancies(Firm, SV, EV));
+		Delta=EV - SV;
+		//.print("Delta is ", Delta);
+		//.print("EV is ", EV);
+		-+totalVac(TV - Delta);
+		.my_name(Me);
+		.send(Firm, askOne, jobRequest(Me,Wage), Unused);
+		!updateFirmVacList(Delta, EV);
+		!sendDemand(NumFirms - 1);
+	}
+	else {
+		!selectDemandFirm(Tail, Idx, NumFirms);
+	}.
+	
++!updateFirmVacList(Delta, EV) <-
+	.findall([Firm, SVac, EVac], firmVacancies(Firm, SVac, EVac), FirmVac);
+	!updateFirmVac(FirmVac, Delta, EV).
+
++!updateFirmVac([[Firm, SVac, EVac] | Tail], Delta, EV) <-
+	if(SVac >= EV) {
+		.abolish(firmVacancies(Firm, SVac, EVac));
+		+firmVacancies(Firm, SVac - Delta, EVac - Delta);
+	}
+	!updateFirmVac(Tail, Delta, EV).
+
++!updateFirmVac([], Delta, EV).
 
 +!chooseEmployer([]) <-
 	+unemployed.
@@ -129,16 +168,19 @@ maxSellers(3).
 	-+money(M+Wage).
 
 +firmPercProduction(Firm, Price, SP, NP) <-
-	+firmProduction(Firm,Price,SP,NP).
-
+	//.abolish(firmProduction(Firm,_,_,_));
+	+firmProduction(Firm,Price,SP,NP);
+	.print("Fproduction!!").
+	
 +totalPercProd(TP) <-
 	-+totalProd(TP).
+
 
 +startGoodsMarket : maxSellers(NSellers) <-
 	-+expenses(0);
 	!chooseSeller(NSellers, []).
 
-+!chooseSeller(NSellers, ChosenSellers) :  not firmProduction(F,P,S,E) & bestPrice([P,F])   <-
+/*+!chooseSeller(NSellers, ChosenSellers) :  not firmProduction(F,P,S,E) & bestPrice([P,F])   <-
 	.sort(ChosenSellers, SortedSellers);
 	if(.member([_,F], SortedSellers)) {
 		.delete([_,F], SortedSellers, RemovedL);
@@ -152,10 +194,10 @@ maxSellers(3).
 	.abolish(firmProduction(_,_,_,_));
 	-+bestPrice(LowestPrice);
 	-+chosenSellers(FinalSellers);
-	!buy.
+	!buy.*/
 	
 
-+!chooseSeller(0, ChosenSellers) :  bestPrice([P,F])  <-
+/*+!chooseSeller(0, ChosenSellers) :  bestPrice([P,F]) <-
 	.sort(ChosenSellers, SortedSellers);
 	if(.member([_,F], SortedSellers)) {
 		.delete([_,F], SortedSellers, RemovedL);
@@ -169,13 +211,14 @@ maxSellers(3).
 	.abolish(firmProduction(_,_,_,_));
 	-+bestPrice(LowestPrice);
 	-+chosenSellers(FinalSellers);
-	!buy.
+	!buy.*/
 
-+!chooseSeller(NSellers, ChosenSellers) : not firmProduction(F,P,S,E) | NSellers==0 <-
-	.findall(Firm, firmProduction(F,P,S,E), L);
++!chooseSeller(NSellers, ChosenSellers) : totalProd(0) | NSellers==0 <-
+	.findall(Firm, firmProduction(Firm,P,S,E), L);
+	.print(L);
 	.sort(ChosenSellers, SortedSellers);
 	.nth(0, SortedSellers, LowestPrice);
-	.abolish(firmProduction(_,_,_,_));
+	//.abolish(firmProduction(_,_,_,_));
 	-+bestPrice(LowestPrice);
 	-+chosenSellers(ChosenSellers);
 	!buy.
@@ -212,10 +255,8 @@ maxSellers(3).
 	!updateSeller(Delta, Tail,OEndP).
 
 +!updateSeller(Delta, [], OEndP).
-
-
 	
-+!startWork(Firm) : requiredWage(W) & maxWage(WageBound) <-
++!startWork(Firm) : requiredWage(W) & maxWage(WageBound) & money(M) <-
 	// informo l'azienda che accetto
 	.my_name(Me);
 	.send(Firm, askOne, jobAccept(Me, W), UnusedRes);
@@ -225,13 +266,14 @@ maxSellers(3).
 	// informo l'environment che per questo ciclo sono occupato
 	employed.
 
-+!buy : (money(0) | chosenSellers([])) & expenses(E) <-
++!buy :  chosenSellers([]) & expenses(E) <-
 	goodsMarketClosed(E).
 
 
 +!buy : money(Money) & chosenSellers([[Price, Seller] | Tail]) & firmList(Firms)  <-
 	-+chosenSellers(Tail);
 	if (.member(Seller, Firms)) { 
+		.print("sending offers: ", Money);
 		.send(Seller, tell, buy(Money));
 	} else {
 		!buy;

@@ -1,5 +1,5 @@
 maxProduction(27).
-productionCoefficient(1).
+productionCoefficient(3).
 goods(0).
 capital(10000).
 price(50).
@@ -38,6 +38,7 @@ price(50).
 // sono stati inviati dai lavoratori
 +jobRequestOver <-
 	.findall([W, Worker], jobRequest(Worker,W), NewDemandsList);
+	.print("New Demand List", NewDemandsList);
 	+jobRequests(NewDemandsList);
 	.findall(Employed, jobAccept(Employed, Wage), OldEmployedList);
 	.abolish(jobRequest(_,_));
@@ -139,6 +140,7 @@ price(50).
 	// questo valore
 	.abolish(introduction(_));
 	Production = Employed * C;
+	.print("i produced: ",Production, "Goods were", G);
 	-+production(Production);
 	-+goods(Production + G);
 	!payEmployed(AcceptList);
@@ -170,6 +172,7 @@ price(50).
 	.abolish(buy(Money)[source(Worker)]);
 	NumGoods = Money div Price;
 	.min([Goods, NumGoods], SoldGoods);
+	.print("I sold ", SoldGoods, "at", Price);
 	-+goods(Goods-SoldGoods);
 	-+capital(C + SoldGoods*Price);
 	.send(Worker, tell, sold(SoldGoods, Price)).

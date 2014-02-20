@@ -7,8 +7,8 @@ MAS simpleEconomy {
 	environment: world("SimpleEconomy.mas2j")
 	
     agents: 
-		worker #1000;
-		firm #100;
+		worker #10;
+		firm #2;
 		creator #1;
 }
 

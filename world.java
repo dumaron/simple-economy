@@ -98,22 +98,24 @@ public class world extends Environment {
 		// of the environment is defined
 		
 		switch (act.getFunctor()) {
-			case "sentAllDemand": 
+			case "sentAllDemands": 
 				if(++workerCount == workers.size()) {
 					workerCount = 0;
 					removePerceptToList(workers, "beginCycle", false);
+					removePerceptToList(workers, "firmPercVacancies(_,_,_)", true);
 					addPerceptToList(firms, "jobRequestOver");
 				}
 				break;
 			case "sentAllJobOffer": 
 				if (++firmCount == firms.size()) {
 					firmCount = 0;
-					addPerceptToList(workers, "jobOfferOver");	
+					addPerceptToList(workers, "jobOfferOver");
 				}
 				break;
 			case "goodsMarketClosed":
 				Integer income = Integer.parseInt(act.getTerm(0).toString());
 				totalIncome+=income;
+				logger.info("income is: "+ income);
 				if (++workerCount == workers.size()) {
 					workerCount = 0;
 					removePerceptToList(workers, "startGoodsMarket", false);
@@ -128,13 +130,14 @@ public class world extends Environment {
 			case "employed" : employed++; break;
 			case "jobMarketClosed": 
 				Integer probab, i, production, price;
-				probab=Integer.parseInt(act.getTerm(0).toString());
+				probab=Integer.parseInt(act.getTerm(0).toString())+1;
 				production=Integer.parseInt(act.getTerm(1).toString())+1;
 				price = Integer.parseInt(act.getTerm(2).toString());
 				currAggrPrice+=price;
 				
-				//addPerceptToList(workers, "firmVacancies("+ag+","+totalProbab+","+(totalProbab + probab)+")");
-				addPerceptToList(workers, "firmVacancies("+ag+",0)");
+				logger.info("firmPercVacancies("+ag+","+totalProbab+","+(totalProbab + probab)+")");
+				logger.info("firmPercProduction("+ag+","+price+","+(totalProduction)+","+ (totalProduction+production) +")");
+				addPerceptToList(workers, "firmPercVacancies("+ag+","+totalProbab+","+(totalProbab + probab)+")");
 				addPerceptToList(workers, "firmPercProduction("+ag+","+price+","+(totalProduction)+","+ (totalProduction+production) +")");
 				totalProbab += probab;
 				totalProduction += production;
@@ -147,7 +150,9 @@ public class world extends Environment {
 					removePerceptToList(firms, "newAggregatePrice(_)", true);
 					removePerceptToList(firms, "jobMarketClosed", false);
 					firmCount = 0;
+					//logger.info("total probab "+ totalProbab);
 					addPerceptToList(workers, "totalPercProd("+ totalProduction +")");
+					addPerceptToList(workers, "totalPercVac("+totalProbab+")");
 					addPerceptToList(firms, "oldAggregatePrice("+oldAggrPrice+")");
 					addPerceptToList(firms, "newAggregatePrice("+currAggrPrice+")");
 					addPerceptToList(workers, "startGoodsMarket");
@@ -155,13 +160,18 @@ public class world extends Environment {
 					currAggrPrice=0;
 					totalProduction=0;
 					totalProbab = 0;
-					logger.info("Fine jmclosed");
+					logger.info("Fine jmclosed ");
 				}
 				break;
 			case "introduced":
 				if (firstCycle && ++firmCount == firms.size()) {
 					firmCount = 0;
 					firstCycle=false;
+					int tv=0;
+					for(int j=0; j<firms.size(); j++) {
+						addPerceptToList(workers, "firmPercVacancies("+firms.get(j)+","+tv+","+(++tv)+")");
+					}
+					addPerceptToList(workers, "totalPercVac("+firms.size()+")");
 					addPerceptToList(workers, "firstCycle");
 				}
 				else if(!firstCycle && ++firmCount == toRespawn) {
@@ -198,7 +208,7 @@ public class world extends Environment {
 			}
 			deadFirms.clear();
 			if (firms.isEmpty()) {
-				logger.info("Nel ciclo di lavoro "+ cycle++ +" ho 0 occupati e "+workers.size()+" disoccupati");
+				logger.info("FALLIMENTO!:Nel ciclo di lavoro "+ cycle++ +" ho 0 occupati e "+workers.size()+" disoccupati");
 				respawned = respawn();
 				toRespawn = respawnNext.size();
 				respawnNext.clear();
@@ -210,7 +220,6 @@ public class world extends Environment {
 		}
 		
 		if (employed + unemployed == workers.size()) {
-			removePerceptToList(workers, "firmVacancies(_,_)", true);
 			logger.info("Nel ciclo di lavoro "+ cycle++ +" ho "+employed+ " occupati e "+unemployed+" disoccupati.");
 			employed = unemployed = 0;
 			addPerceptToList(firms, "jobMarketClosed");
