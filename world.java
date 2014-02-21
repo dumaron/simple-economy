@@ -5,8 +5,12 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Logger;
+import java.util.logging.Handler;
+import java.util.logging.FileHandler;
 import java.util.Date;
+import java.lang.System;
 import java.io.FileInputStream;
+import	java.io.*;
 import jason.mas2j.*;
 import jason.runtime.Settings;
 
@@ -24,11 +28,27 @@ public class world extends Environment {
 	Boolean firstCycle=true;
 	long time;
 	
-    static Logger logger = Logger.getLogger(world.class.getName());
+    static Logger logger;
+	Handler handler;
+	PrintStream	stdout, stderr;
 
 	
 	@Override
 	public void init(String[] args) {
+		try{
+			logger = Logger.getLogger(world.class.getName());
+		//handler=new FileHandler("log", 100000000, 10000000);
+		//logger.addHandler(handler);
+			stdout = new PrintStream (new FileOutputStream
+				      ("output"));
+		    stderr = new PrintStream (new FileOutputStream
+				      ("err"));
+			System.setOut(stdout);
+			System.setErr(stderr);
+		}
+		catch(Exception E) {
+			E.printStackTrace();
+		}
 		workers=new ArrayList<String>();
 		firms = new ArrayList<String>();
 		deadFirms = new ArrayList<String>();
@@ -84,7 +104,7 @@ public class world extends Environment {
 	private boolean respawn() {
 		boolean result = false;
 		for (String respawn : respawnNext) {
-			logger.info("respawning "+respawn);
+			//logger.info("respawning "+respawn);
 			addPercept("creator", Literal.parseLiteral("respawnFirm("+respawn+")"));
 			addPerceptToList(workers, "respawned("+respawn+")");
 			removePerceptToList(workers, "dead("+respawn+")", false);
@@ -110,7 +130,6 @@ public class world extends Environment {
 				break;
 			case "sentAllJobOffer": 
 				if (++firmCount == firms.size()) {
-					logger.info("sent all job offers");
 					firmCount = 0;
 					addPerceptToList(workers, "jobOfferOver");
 				}
@@ -124,7 +143,7 @@ public class world extends Environment {
 					removePerceptToList(workers, "totalPercProd(_)", true);
 					removePerceptToList(workers, "firmPercProduction(_,_,_,_)", true);
 					addPerceptToList(firms, "endCycle");
-					logger.info("PIL: "+totalIncome);
+					System.out.println("Ciclo "+cycle+" PIL: "+totalIncome);
 					totalIncome=0;
 				}
 				break;
@@ -144,15 +163,14 @@ public class world extends Environment {
 				
 				if (++firmCount == firms.size()) {
 					currAggrPrice=currAggrPrice/firms.size();
-					logger.info("Prezzo aggregato: "+currAggrPrice);
-					logger.info("Produzione totale: "+totalProduction);
+					System.out.println("Ciclo "+cycle+" Prezzo aggregato: "+currAggrPrice);
+					System.out.println("Ciclo "+cycle+" Produzione totale: "+totalProduction);
 					removePerceptToList(firms, "oldAggregatePrice(_)", true);
 					removePerceptToList(firms, "newAggregatePrice(_)", true);
 					removePerceptToList(firms, "jobMarketClosed", false);
 					firmCount = 0;
-					//logger.info("total probab "+ totalProbab);
-					addPerceptToList(workers, "totalPercProd("+ totalProduction +")");
-					addPerceptToList(workers, "totalPercVac("+totalProbab+")");
+					addPerceptToList(workers, "totalPercProd("+ (totalProduction-firms.size()) +")");
+					addPerceptToList(workers, "totalPercVac("+(totalProbab-firms.size())+")");
 					addPerceptToList(firms, "oldAggregatePrice("+oldAggrPrice+")");
 					addPerceptToList(firms, "newAggregatePrice("+currAggrPrice+")");
 					addPerceptToList(workers, "startGoodsMarket");
@@ -160,12 +178,10 @@ public class world extends Environment {
 					currAggrPrice=0;
 					totalProduction=0;
 					totalProbab = 0;
-					logger.info("Fine jmclosed ");
 				}
 				break;
 			case "introduced":
 				if (firstCycle && ++firmCount == firms.size()) {
-					logger.info("introduced");
 					firmCount = 0;
 					firstCycle=false;
 					int tv=0;
@@ -209,7 +225,7 @@ public class world extends Environment {
 			}
 			deadFirms.clear();
 			if (firms.isEmpty()) {
-				logger.info("FALLIMENTO!:Nel ciclo di lavoro "+ cycle++ +" ho 0 occupati e "+workers.size()+" disoccupati");
+				System.out.println(":Nel ciclo di lavoro "+ cycle++ +" ho 0 occupati e "+workers.size()+" disoccupati");
 				respawned = respawn();
 				toRespawn = respawnNext.size();
 				respawnNext.clear();
@@ -221,7 +237,7 @@ public class world extends Environment {
 		}
 		
 		if (employed + unemployed == workers.size()) {
-			logger.info("Nel ciclo di lavoro "+ cycle++ +" ho "+employed+ " occupati e "+unemployed+" disoccupati.");
+			System.out.println("Nel ciclo di lavoro "+ cycle++ +" ho "+employed+ " occupati e "+unemployed+" disoccupati.");
 			employed = unemployed = 0;
 			addPerceptToList(firms, "jobMarketClosed");
 			removePerceptToList(firms, "jobRequestOver", false);

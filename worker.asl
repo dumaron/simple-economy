@@ -47,7 +47,6 @@ maxSellers(3).
 	.nth(2, DFirm, DEnd);
 	Delta= DEnd-DStart;
 	.abolish(firmVacancies(Dead,_,_));
-	//.print("updating ", OldStart, ", ", OldEnd, ", ", Delta);
 	!updateFirmVacList(Delta, DEnd);
 	-+totalVac(TV-Delta);
 	!bury(Tail).
